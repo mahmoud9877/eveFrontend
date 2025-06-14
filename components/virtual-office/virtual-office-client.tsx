@@ -108,7 +108,9 @@ export default function VirtualOfficeClient() {
   useEffect(() => {
     const fetcAllhEmployees = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/eve-employee`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`
+        );
         if (response.ok) {
           const data = await response.json();
           console.log("ALL EMPLOYEES", data.employees);
@@ -133,7 +135,7 @@ export default function VirtualOfficeClient() {
           return;
         }
         const res = await fetch(
-          "http://localhost:5000/eve-employee/my-employee",
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -176,7 +178,7 @@ export default function VirtualOfficeClient() {
     try {
       if (!myEmployee) throw new Error("Employee data not loaded");
       const updateRes = await fetch(
-        `http://localhost:5000/eve-employee/${myEmployee.id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployee.id}`,
         {
           method: "PUT",
           headers: {

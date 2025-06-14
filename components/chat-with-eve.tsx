@@ -67,11 +67,10 @@ const ChatWithEve: React.FC = () => {
     const loadEmployees = async () => {
       try {
         const data = await fetchWithAuth(
-          "http://localhost:5000/eve-employee/my-employee",
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
           {},
           logout
         );
-
         console.log("kol el employees", data.eveEmployee);
         // setEveData(data.eveEmployee);
         setMyEmployees(data.eveEmployee || []);
