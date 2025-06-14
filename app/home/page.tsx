@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth, withAuth } from "@/lib/auth-content";
-import HomePage from "@/components/home-page.tsx";
+import { useAuth, withAuth } from "@/lib/auth-context";
+import HomePage from "@/components/home-page";
 
 function Home() {
   const { user } = useAuth();
