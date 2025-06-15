@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Office3DRedesigned from "./office-3d-redesigned";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 const departments = [
   "CF PS HR MFG & Purchases",
@@ -104,17 +105,21 @@ export default function VirtualOfficeClient() {
   const [eveData, setEveData] = useState<EveEmployee | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { logout } = useAuth();
 
   useEffect(() => {
-    const fetcAllhEmployees = async () => {
+    const fetchAllEmployees = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`
+        const response = await fetchWithAuth(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
+          {},
+          logout
         );
-        if (response.ok) {
-          const data = await response.json();
-          console.log("ALL EMPLOYEES", data.employees);
-          setEmployees(data.employees || []);
+        if (response && response.employees) {
+          console.log("ALL EMPLOYEES", response.employees);
+          setEmployees(response.employees || []);
+        } else {
+          throw new Error("No employees found");
         }
       } catch (error) {
         console.error("Failed to fetch all employees:", error);
@@ -128,35 +133,17 @@ export default function VirtualOfficeClient() {
 
     const fetchMyEmployees = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-        const res = await fetch(
+        const response = await fetchWithAuth(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              authorization: `employee${token}`,
-            },
-          }
+          {},
+          logout
         );
 
-        if (res.ok) {
-          const { eveEmployee } = await res.json();
-          console.log("My Employees response:", res);
-          console.log("MY EMPLOYEES", eveEmployee);
-          setMyEmployees(eveEmployee);
+        if (response && response.eveEmployee) {
+          console.log("MY EMPLOYEES", response.eveEmployee);
+          setMyEmployees(response.eveEmployee);
         } else {
-          const errorData = await res.json();
-          console.error("Failed with status:", res.status, errorData);
-          toast({
-            title: "Error",
-            description: errorData.message || "Something went wrong.",
-            variant: "destructive",
-          });
+          throw new Error(response?.message || "Something went wrong");
         }
       } catch (error) {
         console.error("Failed to fetch my employee:", error);
@@ -168,8 +155,8 @@ export default function VirtualOfficeClient() {
       }
     };
 
-    fetchEmployees();
-    fetchMyEmployee();
+    fetchAllEmployees();
+    fetchMyEmployees();
   }, []);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -177,26 +164,23 @@ export default function VirtualOfficeClient() {
     setIsLoading(true);
     try {
       if (!myEmployee) throw new Error("Employee data not loaded");
-      const updateRes = await fetch(
+
+      const updateRes = await fetchWithAuth(
         `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployee.id}`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `employee${localStorage.getItem("accessToken")}`,
-          },
           body: JSON.stringify({
             name: myEmployee.name,
             department_office: myEmployee.department_office,
             role: myEmployee.role,
             status: myEmployee.status,
           }),
-        }
+        },
+        logout
       );
 
-      if (!updateRes.ok) {
-        const errorData = await updateRes.json();
-        throw new Error(errorData.message || "Failed to update employee");
+      if (!updateRes || updateRes.error) {
+        throw new Error(updateRes.message || "Failed to update employee");
       }
 
       toast({
@@ -204,9 +188,6 @@ export default function VirtualOfficeClient() {
         description:
           "Your virtual office profile has been updated successfully.",
       });
-
-      fetchEmployees();
-      fetchMyEmployee();
     } catch (error: any) {
       console.error("Error:", error);
       toast({
@@ -525,13 +506,15 @@ export default function VirtualOfficeClient() {
                       id="name"
                       value={myEmployee?.name || ""}
                       onChange={(e) =>
-                        myEmployee &&
-                        setMyEmployee({ ...myEmployee, name: e.target.value })
+                        setMyEmployee((prev) =>
+                          prev ? { ...prev, name: e.target.value } : prev
+                        )
                       }
                       className="border-gray-300 focus:border-gray-500"
                       required
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="department" className="text-gray-800">
                       Department In Office

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserPlus, MessageSquare, Users, LogOut, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 
 interface HomePageProps {
   user: any;
@@ -26,15 +27,38 @@ export default function HomePage({ user }: HomePageProps) {
   const [hasCreatedEve, setHasCreatedEve] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   useEffect(() => {
-    const storedEve = localStorage.getItem("eve-user");
-    try {
-      const parsed = JSON.parse(storedEve || "{}");
-      const employee = parsed?.employee;
-      setHasCreatedEve(!!employee);
-    } catch (err) {
-      setHasCreatedEve(false);
-    }
-  }, [user]); // أو [someTrigger] لو فيه متغير بيتغير بعد الإنشاء
+    const checkIfEveCreated = async () => {
+      // 1. جرب تجيب من localStorage الأول
+      const storedEve = localStorage.getItem("eveEmployee");
+      if (storedEve) {
+        try {
+          const parsed = JSON.parse(storedEve);
+          const employee = parsed?.employee;
+          if (employee) {
+            setHasCreatedEve(true);
+            return; // طالما لقيت الموظف محليًا، مش محتاج تكلم السيرفر
+          }
+        } catch (err) {
+          // ignore parsing error and continue to fetch
+        }
+      }
+
+      // 2. لو مالقيناش حاجة في localStorage، جرب تجيب من الباك إند
+      try {
+        const data = await fetchWithAuth(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
+          {},
+          logout
+        );
+        setHasCreatedEve(!!data); // true لو لقى موظف، false لو لأ
+      } catch (err) {
+        console.error("Error checking my employee:", err);
+        setHasCreatedEve(false);
+      }
+    };
+
+    checkIfEveCreated();
+  }, [user]);
 
   const handleLogout = async () => {
     try {

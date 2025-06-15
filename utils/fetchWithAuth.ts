@@ -5,14 +5,10 @@ export const fetchWithAuth = async (
 ): Promise<any> => {
   try {
     let accessToken = localStorage.getItem("accessToken");
+    console.log("Access Token:", accessToken);
+
     let res = await fetch(url, {
       ...options,
-      //   headers: {
-      //     ...(options.headers || {}),
-      //     authorization: `employee${accessToken}`,
-      //     "Content-Type": "application/json",
-      //   },
-
       headers: {
         ...(options.headers || {}),
         authorization: `employee${accessToken}`,
@@ -22,6 +18,12 @@ export const fetchWithAuth = async (
       },
       credentials: "include",
     });
+
+    // ✅ طبعنا الرد لو فيه مشكلة
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Initial fetch failed:", res.status, errorText);
+    }
 
     if (res.ok) return await res.json();
 
@@ -56,7 +58,18 @@ export const fetchWithAuth = async (
         credentials: "include",
       });
 
-      return await retryRes.json();
+      const retryText = await retryRes.text();
+      if (!retryRes.ok) {
+        console.error("Retry failed:", retryRes.status, retryText);
+        return null;
+      }
+
+      try {
+        return JSON.parse(retryText);
+      } catch (err) {
+        console.error("Failed to parse retry JSON:", retryText);
+        return null;
+      }
     }
 
     return null;

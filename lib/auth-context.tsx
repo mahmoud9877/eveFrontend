@@ -77,7 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       if (!response.ok) return false;
-
       const responseData = await response.json();
       const user = responseData.user;
       const accessToken = responseData.accessToken;

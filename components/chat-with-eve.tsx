@@ -63,7 +63,6 @@ const ChatWithEve: React.FC = () => {
       router.push("/");
       return;
     }
-
     const loadEmployees = async () => {
       try {
         const data = await fetchWithAuth(
@@ -95,9 +94,7 @@ const ChatWithEve: React.FC = () => {
   };
   const handleSendMessage = async () => {
     if (!input.trim() && !file) return;
-
     const timestamp = new Date();
-
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
