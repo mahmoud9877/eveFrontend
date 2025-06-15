@@ -479,9 +479,10 @@ export default function VirtualOfficeClient() {
                             className="border-b pb-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
                             onClick={() => {
                               setEveData(emp);
+                              setMyEmployee(emp); // ✅ ده اللي يربط البيانات بالـ inputs
                               setMessages([]);
                               toast({
-                                title: `Now chatting with ${emp.name}`,
+                                title: `Now editing ${emp.name}'s profile`,
                               });
                             }}
                           >
