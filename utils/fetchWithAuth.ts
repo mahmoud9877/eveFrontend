@@ -3,32 +3,43 @@ export const fetchWithAuth = async (
   options: RequestInit = {},
   logoutCallback: () => void
 ): Promise<any> => {
-  try {
-    let accessToken = localStorage.getItem("accessToken");
-    console.log("Access Token:", accessToken);
+  let accessToken = localStorage.getItem("accessToken");
 
-    let res = await fetch(url, {
+  const makeRequest = async (token: string) => {
+    return await fetch(url, {
       ...options,
       headers: {
         ...(options.headers || {}),
-        authorization: `employee${accessToken}`,
+        authorization: `employee${token}`,
         ...(options.body instanceof FormData
           ? {}
           : { "Content-Type": "application/json" }),
       },
       credentials: "include",
     });
+  };
 
-    // ✅ طبعنا الرد لو فيه مشكلة
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Initial fetch failed:", res.status, errorText);
+  try {
+    // 🟢 أول محاولة بالتوكن الحالي
+    let res = await makeRequest(accessToken || "");
+
+    const resText = await res.text();
+    let json: any;
+    try {
+      json = JSON.parse(resText);
+    } catch {
+      json = {};
     }
 
-    if (res.ok) return await res.json();
+    // ✅ لو التوكن شغالة رجّع الرد
+    if (res.ok) return json;
 
-    if (res.status === 401) {
-      console.log("Access token expired, trying refresh...");
+    // ⛔ لو التوكن منتهية نبدأ بروسيجر الـ Refresh
+    if (
+      json?.message === "jwt expired" ||
+      json?.error?.name === "TokenExpiredError"
+    ) {
+      console.log("Access token expired. Attempting to refresh...");
 
       const refreshRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/auth/refresh-token`,
@@ -38,43 +49,34 @@ export const fetchWithAuth = async (
         }
       );
 
+      // لو فشل الـ Refresh → Logout
       if (!refreshRes.ok) {
-        console.log("Refresh failed, logging out...");
+        console.warn("Refresh token invalid or expired. Logging out.");
         logoutCallback();
         return null;
       }
 
+      // ✅ جدد التوكن وخزنها
       const { accessToken: newAccessToken } = await refreshRes.json();
       localStorage.setItem("accessToken", newAccessToken);
-      accessToken = newAccessToken;
 
-      const retryRes = await fetch(url, {
-        ...options,
-        headers: {
-          ...(options.headers || {}),
-          authorization: `employee${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
+      // 🔁 أعد إرسال نفس الريكوست بالتوكن الجديدة
+      const retryRes = await makeRequest(newAccessToken);
       const retryText = await retryRes.text();
-      if (!retryRes.ok) {
-        console.error("Retry failed:", retryRes.status, retryText);
-        return null;
-      }
 
       try {
         return JSON.parse(retryText);
-      } catch (err) {
-        console.error("Failed to parse retry JSON:", retryText);
+      } catch {
+        console.error("Retry succeeded but JSON parsing failed:", retryText);
         return null;
       }
     }
 
+    // ⛔ مشاكل تانية (مش Expired) → طبعها بس
+    console.error("Initial fetch failed:", res.status, resText);
     return null;
   } catch (err) {
-    console.error("Error in fetchWithAuth:", err);
+    console.error("Unexpected error in fetchWithAuth:", err);
     logoutCallback();
     return null;
   }
