@@ -98,7 +98,6 @@ const CreateEveForm = () => {
       const fullData = { ...data, position };
       console.log("📤 Sending data to backend:", fullData);
       localStorage.setItem("eveEmployee", JSON.stringify(fullData));
-
       const response = await fetchWithAuth(
         process.env.NEXT_PUBLIC_BASE_URL + "/eve-employee", // ✅ استخدم متغير البيئة بدل localhost
         {
