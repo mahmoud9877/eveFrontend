@@ -1,7 +1,6 @@
-"use client"
-
-import i18n from "i18next"
-import { initReactI18next } from "react-i18next"
+"use client";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
 
 // Initialize i18next
 i18n.use(initReactI18next).init({
@@ -59,13 +58,16 @@ i18n.use(initReactI18next).init({
           male: "Male",
           female: "Female",
           introduction: "Introduction",
-          introductionPlaceholder: "Write an introduction for your EVE employee...",
+          introductionPlaceholder:
+            "Write an introduction for your EVE employee...",
           uploadPhoto: "Upload Photo",
           submit: "Create EVE",
           success: "EVE Created Successfully",
-          successDesc: "Your EVE employee has been created and is ready to assist you.",
+          successDesc:
+            "Your EVE employee has been created and is ready to assist you.",
           error: "Error Creating EVE",
-          errorDesc: "There was a problem creating your EVE employee. Please try again.",
+          errorDesc:
+            "There was a problem creating your EVE employee. Please try again.",
         },
         chat: {
           activeChat: "Chat",
@@ -161,7 +163,8 @@ i18n.use(initReactI18next).init({
           success: "تم إنشاء EVE بنجاح",
           successDesc: "تم إنشاء موظف EVE الخاص بك وهو جاهز لمساعدتك.",
           error: "خطأ في إنشاء EVE",
-          errorDesc: "حدثت مشكلة أثناء إنشاء موظف EVE الخاص بك. يرجى المحاولة مرة أخرى.",
+          errorDesc:
+            "حدثت مشكلة أثناء إنشاء موظف EVE الخاص بك. يرجى المحاولة مرة أخرى.",
         },
         chat: {
           activeChat: "الدردشة",
@@ -204,6 +207,6 @@ i18n.use(initReactI18next).init({
   interpolation: {
     escapeValue: false,
   },
-})
+});
 
-export default i18n
+export default i18n;

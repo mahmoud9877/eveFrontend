@@ -232,38 +232,38 @@ export default function VirtualOfficeClient() {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg p-4">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-3">
-          {/* Left Side */}
-          <div className="flex items-center flex-wrap gap-2">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
+          {/* Left Section */}
+          <div className="flex items-center flex-wrap gap-4">
             <Button
               variant="ghost"
-              className="text-gray-300 hover:text-white hover:bg-gray-700/50"
+              className="text-white hover:text-white/80 hover:bg-white/10 p-2"
               onClick={() => router.push("/home")}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("common.back")}
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <Building className="h-6 w-6 text-gray-300" />
-              <h1 className="text-xl font-bold text-white">
+              <Building className="h-6 w-6 text-white" />
+              <h1 className="text-lg md:text-xl font-semibold text-white whitespace-nowrap">
                 Pixel Virtual Office
               </h1>
             </div>
           </div>
 
-          {/* Right Side */}
-          <div className="flex items-center flex-wrap gap-3">
+          {/* Right Section */}
+          <div className="flex items-center gap-4 flex-wrap">
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              className="text-gray-300 hover:text-white hover:bg-gray-700/50"
+              className="text-white hover:text-white/80 hover:bg-white/10"
             >
               <Globe className="h-4 w-4 mr-1" />
               {i18n?.language === "en" ? "عربي" : "English"}
             </Button>
-            <div className="text-gray-300 text-sm">
-              {t("virtualOffice.loggedInAs")}: {user?.name}
+            <div className="text-sm text-gray-300 whitespace-nowrap">
+              {t("virtualOffice.loggedInAs")}:{" "}
+              <span className="font-medium">{user?.name}</span>
             </div>
           </div>
         </div>
@@ -271,31 +271,31 @@ export default function VirtualOfficeClient() {
 
       <div className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-gradient-to-r from-gray-700 to-gray-800">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-600 rounded-lg shadow-sm overflow-hidden">
             <TabsTrigger
               value="office"
-              className="data-[state=active]:bg-gray-600 text-gray-300"
+              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
             >
               <Cube className="h-4 w-4 mr-2" />
-              Pixel Office
+              Office
             </TabsTrigger>
             <TabsTrigger
               value="people"
-              className="data-[state=active]:bg-gray-600 text-gray-300"
+              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
             >
               <Users className="h-4 w-4 mr-2" />
               People
             </TabsTrigger>
             <TabsTrigger
               value="profile"
-              className="data-[state=active]:bg-gray-600 text-gray-300"
+              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
             >
               <UserCheck className="h-4 w-4 mr-2" />
               Profile
             </TabsTrigger>
             <TabsTrigger
               value="departments"
-              className="data-[state=active]:bg-gray-600 text-gray-300"
+              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
             >
               <MapPin className="h-4 w-4 mr-2" />
               Departments
@@ -303,13 +303,14 @@ export default function VirtualOfficeClient() {
           </TabsList>
 
           <TabsContent value="office" className="space-y-6">
-            <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 shadow-lg">
+            {/* Main Office Card */}
+            <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-xl rounded-xl">
               <CardHeader>
-                <CardTitle className="flex items-center text-gray-800">
-                  <Cube className="h-5 w-5 mr-2" />
+                <CardTitle className="flex items-center text-gray-800 text-lg font-semibold">
+                  <Cube className="h-5 w-5 mr-2 text-blue-600" />
                   Pixel Art Virtual Office Environment
                 </CardTitle>
-                <CardDescription className="text-gray-600">
+                <CardDescription className="text-gray-600 text-sm leading-relaxed">
                   Navigate through the pixel art office space inspired by
                   classic 2D games. Click on the blue cubes to interact with
                   different areas, or click on employee avatars to start
@@ -323,16 +324,17 @@ export default function VirtualOfficeClient() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300">
+              {/* Chat Card */}
+              <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center text-gray-800">
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                  <CardTitle className="text-sm flex items-center text-gray-800 font-medium">
+                    <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
                     Quick Chat
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Button
-                    className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
                     onClick={() => router.push("/chat-with-eve")}
                   >
                     Start Conversation
@@ -340,10 +342,11 @@ export default function VirtualOfficeClient() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300">
+              {/* Team Status Card */}
+              <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center text-gray-800">
-                    <Users className="h-4 w-4 mr-2" />
+                  <CardTitle className="text-sm flex items-center text-gray-800 font-medium">
+                    <Users className="h-4 w-4 mr-2 text-green-600" />
                     Team Status
                   </CardTitle>
                 </CardHeader>
@@ -352,7 +355,9 @@ export default function VirtualOfficeClient() {
                     <span className="text-sm text-gray-700">
                       Online: {employees.length}
                     </span>
-                    <Badge className="bg-gray-200 text-gray-800">Active</Badge>
+                    <Badge className="bg-green-100 text-green-800">
+                      Active
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -360,17 +365,16 @@ export default function VirtualOfficeClient() {
           </TabsContent>
 
           <TabsContent value="people" className="space-y-6">
+            {/* Filter Section */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-                  <Input
-                    placeholder="Search employees..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-gray-300 focus:border-gray-500"
-                  />
-                </div>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+                <Input
+                  placeholder="Search employees..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-gray-300 focus:border-gray-500"
+                />
               </div>
               <Select
                 value={selectedDepartment}
@@ -392,31 +396,33 @@ export default function VirtualOfficeClient() {
               </Select>
             </div>
 
-            <ScrollArea className="h-[600px]">
+            {/* Employees Grid */}
+            <ScrollArea className="h-[600px] pr-2">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEmployees.map((employee) => (
                   <Card
                     key={employee.id}
-                    className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300"
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg"
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                          <span className="text-white font-medium">
+                          <span className="text-white font-semibold">
                             {employee.name.charAt(0)}
                           </span>
                         </div>
                         <div>
-                          <CardTitle className="text-sm text-gray-800">
+                          <CardTitle className="text-sm text-gray-800 font-medium truncate">
                             {employee.name}
                           </CardTitle>
-                          <CardDescription className="text-gray-600 text-xs">
+                          <CardDescription className="text-gray-600 text-xs truncate">
                             {employee.department}
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
+
+                    <CardContent className="pt-0 space-y-2">
                       <div className="flex items-center justify-between">
                         <Badge
                           variant={employee.isAI ? "secondary" : "outline"}
@@ -428,19 +434,20 @@ export default function VirtualOfficeClient() {
                         >
                           {employee.isAI ? "AI Assistant" : "Human"}
                         </Badge>
-                        <div className="flex space-x-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-200"
-                            onClick={() => router.push("/chat-with-eve")}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                          </Button>
-                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-200"
+                          onClick={() => router.push("/chat-with-eve")}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
                       </div>
+
+                      {/* Full intro text without truncation */}
                       {employee.introduction && (
-                        <p className="text-xs text-gray-600 mt-2 line-clamp-2">
+                        <p className="text-xs text-gray-600 mt-1 break-words">
                           {employee.introduction}
                         </p>
                       )}
@@ -450,79 +457,96 @@ export default function VirtualOfficeClient() {
               </div>
             </ScrollArea>
           </TabsContent>
-
           <TabsContent value="profile" className="space-y-6">
-            <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300">
-              <CardHeader>
-                <CardTitle className="text-gray-800">
-                  Your Virtual Office Profile
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Update your information for the pixel virtual office
-                </CardDescription>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-white border-white/30 hover:bg-white/20"
-                    >
-                      My EVE Employees
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 bg-white text-black">
-                    <h4 className="font-semibold mb-2">Employees List</h4>
-                    <ul className="space-y-1 max-h-60 overflow-y-auto">
-                      {myEmployees?.length === 0 ? (
-                        <p className="text-sm text-gray-500">
-                          No employees found.
-                        </p>
-                      ) : (
-                        myEmployees.map((emp) => (
-                          <li
-                            key={emp.id}
-                            className="border-b pb-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                            onClick={() => {
-                              setEveData(emp);
-                              setMyEmployee(emp); // ✅ ده اللي يربط البيانات بالـ inputs
-                              setMessages([]);
-                              toast({
-                                title: `Now editing ${emp.name}'s profile`,
-                              });
-                            }}
-                          >
-                            <p className="font-medium">{emp.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {emp.department}
-                            </p>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </PopoverContent>
-                </Popover>
+            <Card className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-md rounded-lg">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-gray-800 text-lg font-semibold">
+                      Your Virtual Office Profile
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      Update your information for the Pixel Virtual Office.
+                    </CardDescription>
+                  </div>
+
+                  {/* Popover for My EVE Employees */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-600 to-purple-800 text-white hover:from-purple-700 hover:to-purple-900"
+                      >
+                        My EVE Employees
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 bg-white text-black shadow-lg border border-gray-200 rounded-md">
+                      <h4 className="font-semibold mb-2 text-gray-800">
+                        Employees List
+                      </h4>
+                      <ul className="space-y-1 max-h-60 overflow-y-auto">
+                        {myEmployees?.length === 0 ? (
+                          <p className="text-sm text-gray-500">
+                            No employees found.
+                          </p>
+                        ) : (
+                          myEmployees.map((emp) => (
+                            <li
+                              key={emp.id}
+                              className="border-b pb-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-all"
+                              onClick={() => {
+                                setEveData(emp);
+                                setMyEmployee(emp);
+                                setMessages([]);
+                                toast({
+                                  title: `Now editing ${emp.name}'s profile`,
+                                });
+                              }}
+                            >
+                              <p className="font-medium">{emp.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {emp.department}
+                              </p>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </CardHeader>
+
               <CardContent>
-                <form onSubmit={handleProfileUpdate} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-gray-800">
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                  {/* Name */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="name"
+                      className="text-sm text-gray-700 font-medium"
+                    >
                       Name
                     </Label>
                     <Input
                       id="name"
+                      required
                       value={myEmployee?.name || ""}
                       onChange={(e) =>
                         setMyEmployee((prev) =>
                           prev ? { ...prev, name: e.target.value } : prev
                         )
                       }
-                      className="border-gray-300 focus:border-gray-500"
-                      required
+                      className="border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
+                      placeholder="Enter employee name"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="department" className="text-gray-800">
+                  {/* Department */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="department"
+                      className="text-sm text-gray-700 font-medium"
+                    >
                       Department In Office
                     </Label>
                     <Select
@@ -535,7 +559,7 @@ export default function VirtualOfficeClient() {
                         })
                       }
                     >
-                      <SelectTrigger className="border-gray-300">
+                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-400">
                         <SelectValue placeholder="Select Department" />
                       </SelectTrigger>
                       <SelectContent>
@@ -548,28 +572,33 @@ export default function VirtualOfficeClient() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="role" className="text-gray-800">
+                  {/* Role */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="role"
+                      className="text-sm text-gray-700 font-medium"
+                    >
                       Role
                     </Label>
                     <Input
                       id="role"
+                      required
                       value={myEmployee?.role || ""}
                       onChange={(e) =>
                         myEmployee &&
-                        setMyEmployee({
-                          ...myEmployee,
-                          role: e.target.value,
-                        })
+                        setMyEmployee({ ...myEmployee, role: e.target.value })
                       }
-                      className="border-gray-300 focus:border-gray-500"
-                      placeholder="Your Role"
-                      required
+                      className="border-gray-300 focus:ring-2 focus:ring-gray-400"
+                      placeholder="e.g. Developer, Designer"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="status" className="text-gray-800">
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="status"
+                      className="text-sm text-gray-700 font-medium"
+                    >
                       Status
                     </Label>
                     <Select
@@ -579,8 +608,8 @@ export default function VirtualOfficeClient() {
                         setMyEmployee({ ...myEmployee, status: value })
                       }
                     >
-                      <SelectTrigger className="border-gray-300">
-                        <SelectValue />
+                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-400">
+                        <SelectValue placeholder="Select Status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="online">Online</SelectItem>
@@ -591,9 +620,10 @@ export default function VirtualOfficeClient() {
                     </Select>
                   </div>
 
+                  {/* Submit Button */}
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white"
+                    className="w-full py-2 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-medium"
                     disabled={isLoading}
                   >
                     {isLoading ? "Updating..." : "Update Profile"}
@@ -612,37 +642,43 @@ export default function VirtualOfficeClient() {
                 return (
                   <Card
                     key={dept}
-                    className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300"
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg"
                   >
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-gray-800">
+                      <CardTitle className="text-base font-semibold text-gray-800">
                         {dept}
                       </CardTitle>
-                      <CardDescription className="text-gray-600 text-xs">
-                        {deptEmployees.length} employees
+                      <CardDescription className="text-gray-500 text-sm">
+                        {deptEmployees.length}{" "}
+                        {deptEmployees.length === 1 ? "employee" : "employees"}
                       </CardDescription>
                     </CardHeader>
+
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between">
+                        {/* Employee initials */}
                         <div className="flex -space-x-2">
                           {deptEmployees.slice(0, 3).map((emp) => (
                             <div
                               key={emp.id}
-                              className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white flex items-center justify-center text-xs text-white"
+                              className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white flex items-center justify-center text-sm font-medium text-white shadow-sm"
+                              title={emp.name}
                             >
                               {emp.name.charAt(0)}
                             </div>
                           ))}
                           {deptEmployees.length > 3 && (
-                            <div className="w-6 h-6 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-xs text-white">
+                            <div className="w-8 h-8 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-sm font-medium text-white shadow-sm">
                               +{deptEmployees.length - 3}
                             </div>
                           )}
                         </div>
+
+                        {/* View Button */}
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-gray-600 hover:bg-gray-200"
+                          className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition"
                           onClick={() => {
                             setSelectedDepartment(dept);
                             setActiveTab("people");

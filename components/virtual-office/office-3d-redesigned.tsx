@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { Suspense, useRef, useState, useEffect } from "react"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, Text, Box, Cylinder } from "@react-three/drei"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Users, Video, MonitorIcon, Coffee, MessageSquare } from "lucide-react"
-import EveAvatar from "./eve-avatar-pixel"
-import { useRouter } from "next/navigation"
+import { Suspense, useRef, useState, useEffect } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Text, Box, Cylinder } from "@react-three/drei";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users, Video, MonitorIcon, Coffee, MessageSquare } from "lucide-react";
+import EveAvatar from "./eve-avatar-pixel";
+import { useRouter } from "next/navigation";
 
 // Pixel-style colors matching the reference image
 const COLORS = {
@@ -23,7 +23,7 @@ const COLORS = {
   pot: "#8B4513",
   meeting: "#A0522D",
   equipment: "#696969",
-}
+};
 
 // Floor Tile Component (matching pixel art style)
 function FloorTile({ position, size = [1, 0.1, 1] }) {
@@ -31,12 +31,17 @@ function FloorTile({ position, size = [1, 0.1, 1] }) {
     <Box args={size} position={position}>
       <meshLambertMaterial color={COLORS.floor} />
     </Box>
-  )
+  );
 }
 
 // Pixel-style Desk Component
-function PixelDesk({ position, rotation = [0, 0, 0], color = COLORS.desk, type = "standard" }) {
-  const deskColor = type === "orange" ? COLORS.deskAlt : color
+function PixelDesk({
+  position,
+  rotation = [0, 0, 0],
+  color = COLORS.desk,
+  type = "standard",
+}) {
+  const deskColor = type === "orange" ? COLORS.deskAlt : color;
 
   return (
     <group position={position} rotation={rotation}>
@@ -62,7 +67,7 @@ function PixelDesk({ position, rotation = [0, 0, 0], color = COLORS.desk, type =
         <meshLambertMaterial color={deskColor} />
       </Box>
     </group>
-  )
+  );
 }
 
 // Pixel-style Chair Component
@@ -91,7 +96,7 @@ function PixelChair({ position, rotation = [0, 0, 0] }) {
         <meshLambertMaterial color={COLORS.chair} />
       </Box>
     </group>
-  )
+  );
 }
 
 // Pixel-style Computer Monitor
@@ -115,13 +120,13 @@ function PixelMonitor({ position, rotation = [0, 0, 0] }) {
         <meshLambertMaterial color={COLORS.computer} />
       </Box>
     </group>
-  )
+  );
 }
 
 // Pixel-style Plant
 function PixelPlant({ position, size = "small" }) {
-  const plantSize = size === "large" ? 0.4 : 0.25
-  const potSize = size === "large" ? [0.2, 0.3, 0.2] : [0.15, 0.2, 0.15]
+  const plantSize = size === "large" ? 0.4 : 0.25;
+  const potSize = size === "large" ? [0.2, 0.3, 0.2] : [0.15, 0.2, 0.15];
 
   return (
     <group position={position}>
@@ -130,11 +135,14 @@ function PixelPlant({ position, size = "small" }) {
         <meshLambertMaterial color={COLORS.pot} />
       </Box>
       {/* Plant leaves */}
-      <Box args={[plantSize, plantSize, plantSize]} position={[0, potSize[1] + plantSize / 2, 0]}>
+      <Box
+        args={[plantSize, plantSize, plantSize]}
+        position={[0, potSize[1] + plantSize / 2, 0]}
+      >
         <meshLambertMaterial color={COLORS.plant} />
       </Box>
     </group>
-  )
+  );
 }
 
 // Meeting Table (rectangular, pixel style)
@@ -159,7 +167,7 @@ function PixelMeetingTable({ position, rotation = [0, 0, 0] }) {
         <meshLambertMaterial color={COLORS.meeting} />
       </Box>
     </group>
-  )
+  );
 }
 
 // Office Equipment (printer, etc.)
@@ -174,7 +182,7 @@ function OfficeEquipment({ position, type = "printer" }) {
           <meshLambertMaterial color="#FFFFFF" />
         </Box>
       </group>
-    )
+    );
   }
 
   // Coffee machine
@@ -187,7 +195,7 @@ function OfficeEquipment({ position, type = "printer" }) {
         <meshLambertMaterial color="#000000" />
       </Box>
     </group>
-  )
+  );
 }
 
 // Water Cooler
@@ -203,20 +211,20 @@ function WaterCooler({ position }) {
         <meshLambertMaterial color="#87CEEB" />
       </Cylinder>
     </group>
-  )
+  );
 }
 
 // Interactive Hotspot (smaller, more subtle)
 function PixelHotspot({ position, label, onClick }) {
-  const meshRef = useRef()
-  const [hovered, setHovered] = useState(false)
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.5
-      meshRef.current.scale.setScalar(hovered ? 1.1 : 1)
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.5;
+      meshRef.current.scale.setScalar(hovered ? 1.1 : 1);
     }
-  })
+  });
 
   return (
     <group position={position}>
@@ -227,25 +235,36 @@ function PixelHotspot({ position, label, onClick }) {
         onPointerOut={() => setHovered(false)}
         onClick={onClick}
       >
-        <meshBasicMaterial color={hovered ? "#FFD700" : "#00BFFF"} transparent opacity={0.7} />
+        <meshBasicMaterial
+          color={hovered ? "#FFD700" : "#00BFFF"}
+          transparent
+          opacity={0.7}
+        />
       </Box>
       {hovered && (
-        <Text position={[0, 0.4, 0]} fontSize={0.12} color="white" anchorX="center" anchorY="middle" billboard>
+        <Text
+          position={[0, 0.4, 0]}
+          fontSize={0.12}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          billboard
+        >
           {label}
         </Text>
       )}
     </group>
-  )
+  );
 }
 
 // Main Office Scene matching the pixel art layout
 function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
-  const { camera } = useThree()
+  const { camera } = useThree();
 
   useEffect(() => {
-    camera.position.set(0, 8, 8)
-    camera.lookAt(0, 0, 0)
-  }, [camera])
+    camera.position.set(0, 8, 8);
+    camera.lookAt(0, 0, 0);
+  }, [camera]);
 
   return (
     <>
@@ -256,7 +275,9 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
 
       {/* Floor tiles in a grid pattern */}
       {Array.from({ length: 20 }, (_, x) =>
-        Array.from({ length: 20 }, (_, z) => <FloorTile key={`${x}-${z}`} position={[x - 10, 0, z - 10]} />),
+        Array.from({ length: 20 }, (_, z) => (
+          <FloorTile key={`${x}-${z}`} position={[x - 10, 0, z - 10]} />
+        ))
       )}
 
       {/* Walls */}
@@ -313,7 +334,10 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
       {/* Reception area (top left) */}
       <PixelDesk position={[-7, 0, -7]} rotation={[0, Math.PI / 4, 0]} />
       <PixelChair position={[-6.3, 0, -6.3]} rotation={[0, Math.PI / 4, 0]} />
-      <PixelMonitor position={[-7.3, 0.9, -7.3]} rotation={[0, Math.PI / 4, 0]} />
+      <PixelMonitor
+        position={[-7.3, 0.9, -7.3]}
+        rotation={[0, Math.PI / 4, 0]}
+      />
 
       {/* Additional workstations */}
       <PixelDesk position={[-6, 0, 2]} rotation={[0, Math.PI / 2, 0]} />
@@ -333,12 +357,36 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
       <PixelPlant position={[2, 0, 8]} size="small" />
 
       {/* Interactive hotspots */}
-      <PixelHotspot position={[-6, 1.5, -4]} label="Development Team" onClick={() => onInteraction("dev")} />
-      <PixelHotspot position={[0, 1.5, -4]} label="Design Team" onClick={() => onInteraction("design")} />
-      <PixelHotspot position={[6, 1.5, -4]} label="QA Team" onClick={() => onInteraction("qa")} />
-      <PixelHotspot position={[5, 1.5, 4]} label="Meeting Room" onClick={() => onInteraction("meeting")} />
-      <PixelHotspot position={[7.5, 1.5, -7]} label="Break Area" onClick={() => onInteraction("break")} />
-      <PixelHotspot position={[-7, 1.5, -7]} label="Reception" onClick={() => onInteraction("reception")} />
+      <PixelHotspot
+        position={[-6, 1.5, -4]}
+        label="Development Team"
+        onClick={() => onInteraction("dev")}
+      />
+      <PixelHotspot
+        position={[0, 1.5, -4]}
+        label="Design Team"
+        onClick={() => onInteraction("design")}
+      />
+      <PixelHotspot
+        position={[6, 1.5, -4]}
+        label="QA Team"
+        onClick={() => onInteraction("qa")}
+      />
+      <PixelHotspot
+        position={[5, 1.5, 4]}
+        label="Meeting Room"
+        onClick={() => onInteraction("meeting")}
+      />
+      <PixelHotspot
+        position={[7.5, 1.5, -7]}
+        label="Break Area"
+        onClick={() => onInteraction("break")}
+      />
+      <PixelHotspot
+        position={[-7, 1.5, -7]}
+        label="Reception"
+        onClick={() => onInteraction("reception")}
+      />
 
       {/* EVE Employees positioned throughout the office */}
       {employees.map((employee, index) => {
@@ -354,9 +402,9 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
           [4, 0, 3], // Meeting area
           [6, 0, 5], // Meeting area
           [-6.3, 0, -6.3], // Reception
-        ]
+        ];
 
-        const position = positions[index % positions.length] || [0, 0, 0]
+        const position = positions[index % positions.length] || [0, 0, 0];
 
         return (
           <EveAvatar
@@ -367,7 +415,7 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
             }}
             onClick={onEmployeeClick}
           />
-        )
+        );
       })}
 
       {/* Camera Controls */}
@@ -382,7 +430,7 @@ function PixelOfficeScene({ onInteraction, onEmployeeClick, employees }) {
         target={[0, 0, 0]}
       />
     </>
-  )
+  );
 }
 
 // Loading Component
@@ -394,30 +442,30 @@ function LoadingScreen() {
         <p>Loading Pixel Office Environment...</p>
       </div>
     </div>
-  )
+  );
 }
 
 // Main Office 3D Component
 export default function Office3DRedesigned({ employees = [] }) {
-  const [selectedArea, setSelectedArea] = useState(null)
-  const [selectedEmployee, setSelectedEmployee] = useState(null)
-  const [showControls, setShowControls] = useState(true)
-  const router = useRouter()
+  const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showControls, setShowControls] = useState(true);
+  const router = useRouter();
 
   const handleInteraction = (area) => {
-    setSelectedArea(area)
-    setSelectedEmployee(null)
-  }
+    setSelectedArea(area);
+    setSelectedEmployee(null);
+  };
 
   const handleEmployeeClick = (employee) => {
-    setSelectedEmployee(employee)
-    setSelectedArea(null)
-  }
+    setSelectedEmployee(employee);
+    setSelectedArea(null);
+  };
 
   const handleChatWithEmployee = (employee) => {
-    localStorage.setItem("selectedEveForChat", JSON.stringify(employee))
-    router.push("/chat-with-eve")
-  }
+    localStorage.setItem("selectedEveForChat", JSON.stringify(employee));
+    router.push("/chat-with-eve");
+  };
 
   const getAreaInfo = (area) => {
     const areas = {
@@ -457,14 +505,18 @@ export default function Office3DRedesigned({ employees = [] }) {
         icon: <Users className="h-5 w-5" />,
         actions: ["Check In", "Get Information", "Directory"],
       },
-    }
-    return areas[area] || null
-  }
+    };
+    return areas[area] || null;
+  };
 
   return (
     <div className="relative w-full h-[600px] bg-gradient-to-b from-amber-100 to-orange-200 rounded-lg overflow-hidden">
       {/* 3D Canvas */}
-      <Canvas shadows camera={{ position: [0, 8, 8], fov: 60 }} style={{ width: "100%", height: "100%" }}>
+      <Canvas
+        shadows
+        camera={{ position: [0, 8, 8], fov: 60 }}
+        style={{ width: "100%", height: "100%" }}
+      >
         <Suspense fallback={null}>
           <PixelOfficeScene
             onInteraction={handleInteraction}
@@ -520,19 +572,28 @@ export default function Office3DRedesigned({ employees = [] }) {
             <CardContent className="p-0">
               <div className="flex items-center mb-3">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mr-3">
-                  <span className="text-white font-bold text-lg">{selectedEmployee.name.charAt(0)}</span>
+                  <span className="text-white font-bold text-lg">
+                    {selectedEmployee.name.charAt(0)}
+                  </span>
                 </div>
                 <div>
                   <h3 className="font-bold">{selectedEmployee.name}</h3>
-                  <p className="text-sm text-gray-300">{selectedEmployee.department}</p>
-                  <Badge variant={selectedEmployee.isAI ? "secondary" : "outline"} className="text-xs">
+                  <p className="text-sm text-gray-300">
+                    {selectedEmployee.department}
+                  </p>
+                  <Badge
+                    variant={selectedEmployee.isAI ? "secondary" : "outline"}
+                    className="text-xs"
+                  >
                     {selectedEmployee.isAI ? "AI Assistant" : "Human"}
                   </Badge>
                 </div>
               </div>
 
               {selectedEmployee.introduction && (
-                <p className="text-sm text-gray-300 mb-3">{selectedEmployee.introduction}</p>
+                <p className="text-sm text-gray-300 mb-3">
+                  {selectedEmployee.introduction}
+                </p>
               )}
 
               <div className="space-y-2">
@@ -570,9 +631,13 @@ export default function Office3DRedesigned({ employees = [] }) {
             <CardContent className="p-0">
               <div className="flex items-center mb-2">
                 {getAreaInfo(selectedArea)?.icon}
-                <h3 className="font-bold ml-2">{getAreaInfo(selectedArea)?.title}</h3>
+                <h3 className="font-bold ml-2">
+                  {getAreaInfo(selectedArea)?.title}
+                </h3>
               </div>
-              <p className="text-sm text-gray-300 mb-3">{getAreaInfo(selectedArea)?.description}</p>
+              <p className="text-sm text-gray-300 mb-3">
+                {getAreaInfo(selectedArea)?.description}
+              </p>
               <div className="space-y-2">
                 {getAreaInfo(selectedArea)?.actions.map((action, index) => (
                   <Button
@@ -635,5 +700,5 @@ export default function Office3DRedesigned({ employees = [] }) {
         </Badge>
       </div>
     </div>
-  )
+  );
 }
