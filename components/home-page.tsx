@@ -85,17 +85,9 @@ export default function HomePage({ user }: HomePageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
-            {/* <div className="w-12 h-12 relative rounded-full overflow-hidden">
-              <Image
-                src={user?.image || "/placeholder.svg?height=48&width=48"}
-                alt={user?.name || "User"}
-                width={48}
-                height={48}
-                className="rounded-full"
-              />
-            </div> */}
+        {/* Header */}
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+          <div className="flex items-center gap-4">
             <div>
               <h2 className="text-xl font-bold">
                 {t("home.welcome")}, {user?.name || "User"}
@@ -103,7 +95,7 @@ export default function HomePage({ user }: HomePageProps) {
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={toggleLanguage}>
               <Globe className="h-4 w-4 mr-2" />
               {i18n.language === "en" ? "عربي" : "English"}
@@ -119,7 +111,9 @@ export default function HomePage({ user }: HomePageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Create EVE Card */}
           <Card
             className="hover:shadow-lg transition-shadow cursor-pointer"
             onClick={() => handleNavigation("/create-eve")}
@@ -149,6 +143,7 @@ export default function HomePage({ user }: HomePageProps) {
             </CardFooter>
           </Card>
 
+          {/* Chat With EVE Card */}
           <Card
             className="hover:shadow-lg transition-shadow cursor-pointer"
             onClick={() => hasCreatedEve && handleNavigation("/chat-with-eve")}
@@ -171,9 +166,7 @@ export default function HomePage({ user }: HomePageProps) {
                 disabled={!hasCreatedEve}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (hasCreatedEve) {
-                    handleNavigation("/chat-with-eve");
-                  }
+                  if (hasCreatedEve) handleNavigation("/chat-with-eve");
                 }}
               >
                 {hasCreatedEve
@@ -183,6 +176,7 @@ export default function HomePage({ user }: HomePageProps) {
             </CardFooter>
           </Card>
 
+          {/* Virtual Office Card */}
           <Card
             className="hover:shadow-lg transition-shadow cursor-pointer"
             onClick={() => handleNavigation("/virtual-office")}

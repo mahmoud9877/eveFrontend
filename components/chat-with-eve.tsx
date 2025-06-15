@@ -158,105 +158,111 @@ const ChatWithEve: React.FC = () => {
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-b border-white/10">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              className="text-white hover:text-white/80 hover:bg-white/10 mr-4"
-              onClick={() =>
-                router.push(isFromOffice ? "/virtual-office" : "/home")
-              }
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {isFromOffice ? "Back to Office" : "Back to Home"}
-            </Button>
+        <div className="container mx-auto flex items-center justify-between overflow-x-auto">
+          {/* اليسار: زر الرجوع */}
+          <Button
+            variant="ghost"
+            className="text-white hover:text-white/80 hover:bg-white/10"
+            onClick={() =>
+              router.push(isFromOffice ? "/virtual-office" : "/home")
+            }
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
 
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-10 w-10">
-                {myEmployees?.imageUrl || myEmployees?.photoUrl ? (
-                  <AvatarImage
-                    src={myEmployees.imageUrl || myEmployees.photoUrl}
-                  />
-                ) : (
-                  <AvatarFallback className="bg-blue-500 text-white">
-                    {myEmployees?.name?.charAt(0) || "E"}
-                  </AvatarFallback>
+          {/* المنتصف: بيانات الموظف */}
+          <div className="flex items-center gap-4 min-w-0">
+            <Avatar className="h-10 w-10 shrink-0">
+              {myEmployees?.imageUrl || myEmployees?.photoUrl ? (
+                <AvatarImage
+                  src={myEmployees.imageUrl || myEmployees.photoUrl}
+                  alt="employee avatar"
+                />
+              ) : (
+                <AvatarFallback className="bg-blue-500 text-white">
+                  {myEmployees?.name?.charAt(0) || "E"}
+                </AvatarFallback>
+              )}
+            </Avatar>
+
+            <div className="truncate">
+              <h2 className="text-lg font-semibold text-white truncate">
+                {myEmployees?.name || "EVE"}
+              </h2>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-blue-200 truncate">
+                  {myEmployees?.department || "AI Assistant"}
+                </p>
+                {myEmployees?.isAI && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs whitespace-nowrap"
+                  >
+                    AI
+                  </Badge>
                 )}
-              </Avatar>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-4">
-                  <h2 className="text-lg font-semibold text-white">
-                    {myEmployees?.name || "EVE"}
-                  </h2>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm text-blue-200">
-                    {myEmployees?.department || "AI Assistant"}
-                  </p>
-                  {myEmployees?.isAI && (
-                    <Badge variant="secondary" className="text-xs">
-                      AI Assistant
-                    </Badge>
-                  )}
-                  {myEmployees?.status && (
-                    <Badge variant="outline" className="text-xs">
-                      {myEmployees.status}
-                    </Badge>
-                  )}
-                </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-white border-white/30 hover:bg-white/20"
-                    >
-                      My EVE Employees
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64 bg-white text-black">
-                    <h4 className="font-semibold mb-2">Employees List</h4>
-                    <ul className="space-y-1 max-h-60 overflow-y-auto">
-                      {myEmployees.length === 0 ? (
-                        <p className="text-sm text-gray-500">
-                          No employees found.
-                        </p>
-                      ) : (
-                        eveData.map((emp) => (
-                          <li
-                            key={emp.id}
-                            className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                            onClick={() => {
-                              setMyEmployees(emp);
-                              setMessages([]);
-                              toast({
-                                title: `Now chatting with ${emp.name}`,
-                              });
-                            }}
-                          >
-                            <p className="font-medium">{emp.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {emp.department}
-                            </p>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </PopoverContent>
-                </Popover>
+                {myEmployees?.status && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs whitespace-nowrap"
+                  >
+                    {myEmployees.status}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
-          {isFromOffice && (
-            <Button
-              variant="outline"
-              className="text-white border-white/30 hover:bg-white/20"
-              onClick={() => router.push("/virtual-office")}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Back to Office
-            </Button>
-          )}
+
+          {/* اليمين: قائمة الموظفين + زر إضافي */}
+          <div className="flex items-center gap-4 shrink-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  My EVE Employees
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 bg-white text-black">
+                <h4 className="font-semibold mb-2">Employees List</h4>
+                <ul className="space-y-1 max-h-60 overflow-y-auto">
+                  {myEmployees.length === 0 ? (
+                    <p className="text-sm text-gray-500">No employees found.</p>
+                  ) : (
+                    eveData.map((emp) => (
+                      <li
+                        key={emp.id}
+                        className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                        onClick={() => {
+                          setMyEmployees(emp);
+                          setMessages([]);
+                          toast({ title: `Now chatting with ${emp.name}` });
+                        }}
+                      >
+                        <p className="font-medium">{emp.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {emp.department}
+                        </p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </PopoverContent>
+            </Popover>
+
+            {isFromOffice && (
+              <Button
+                variant="outline"
+                className="text-white border-white/20 hover:bg-white/10"
+                onClick={() => router.push("/virtual-office")}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Office
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -271,13 +277,13 @@ const ChatWithEve: React.FC = () => {
               }`}
             >
               <Card
-                className={`max-w-md ${
+                className={`max-w-md rounded-2xl px-3 py-2 ${
                   msg.sender === "user"
                     ? "bg-blue-600 text-white"
                     : "bg-white/10 text-white backdrop-blur"
                 }`}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-0">
                   {msg.type === "file" ? (
                     <div>
                       <p className="text-sm font-semibold">File:</p>
@@ -305,14 +311,14 @@ const ChatWithEve: React.FC = () => {
 
       {/* Input */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-t border-white/10">
-        <div className="container mx-auto max-w-4xl flex space-x-3">
+        <div className="container mx-auto max-w-4xl flex gap-2">
           <Input
             type="text"
             placeholder={`Message ${myEmployees?.name || "EVE"}...`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50"
+            className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:ring-white focus:border-white"
           />
           <input
             ref={fileInputRef}

@@ -232,22 +232,27 @@ export default function VirtualOfficeClient() {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg p-4">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center">
+        <div className="container mx-auto flex flex-wrap items-center justify-between gap-3">
+          {/* Left Side */}
+          <div className="flex items-center flex-wrap gap-2">
             <Button
               variant="ghost"
-              className="text-gray-300 hover:text-white hover:bg-gray-700/50 mr-4"
+              className="text-gray-300 hover:text-white hover:bg-gray-700/50"
               onClick={() => router.push("/home")}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t("common.back")}
             </Button>
-            <Building className="h-6 w-6 text-gray-300 mr-2" />
-            <h1 className="text-xl font-bold text-white">
-              Pixel Virtual Office
-            </h1>
+            <div className="flex items-center gap-2">
+              <Building className="h-6 w-6 text-gray-300" />
+              <h1 className="text-xl font-bold text-white">
+                Pixel Virtual Office
+              </h1>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
+
+          {/* Right Side */}
+          <div className="flex items-center flex-wrap gap-3">
             <Button
               variant="ghost"
               size="sm"
