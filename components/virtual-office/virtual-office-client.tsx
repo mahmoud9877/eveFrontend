@@ -80,7 +80,6 @@ type EveEmployee = {
   department: string;
   position: string;
   knowledgeText: string;
-  department_office: string;
   status: string;
   createdBy: number;
   createdAt: string;
@@ -185,7 +184,7 @@ export default function VirtualOfficeClient() {
           },
           body: JSON.stringify({
             name: myEmployee.name,
-            department_office: myEmployee.department_office,
+            department: myEmployee.department,
             role: myEmployee.role,
             status: myEmployee.status,
           }),
@@ -217,11 +216,11 @@ export default function VirtualOfficeClient() {
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (emp.department_office &&
-        emp.department_office.toLowerCase().includes(searchTerm.toLowerCase()));
+      (emp.department &&
+        emp.department.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDepartment =
       selectedDepartment === "All Departments" ||
-      emp.department_office === selectedDepartment;
+      emp.department === selectedDepartment;
     return matchesSearch && matchesDepartment;
   });
 
@@ -298,7 +297,7 @@ export default function VirtualOfficeClient() {
               className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
             >
               <Users className="h-4 w-4 mr-2" />
-              People
+              Employees
             </TabsTrigger>
             <TabsTrigger
               value="profile"
@@ -568,12 +567,12 @@ export default function VirtualOfficeClient() {
                       Department In Office
                     </Label>
                     <Select
-                      value={myEmployee?.department_office || ""}
+                      value={myEmployee?.department || ""}
                       onValueChange={(value) =>
                         myEmployee &&
                         setMyEmployee({
                           ...myEmployee,
-                          department_office: value,
+                          department: value,
                         })
                       }
                     >
@@ -655,7 +654,7 @@ export default function VirtualOfficeClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {departments.map((dept) => {
                 const deptEmployees = employees.filter(
-                  (emp) => emp.department_office === dept
+                  (emp) => emp.department === dept
                 );
                 return (
                   <Card

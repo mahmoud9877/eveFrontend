@@ -41,8 +41,34 @@ const formSchema = z.object({
   }),
 });
 
-const departments = ["Engineering", "Marketing", "Sales", "Human Resources"];
-
+const departments = [
+  "CF PS HR MFG & Purchases",
+  "CF PS MFG EGYPT",
+  "F&A",
+  "FPWH",
+  "General Operations",
+  "GMDSO",
+  "HR",
+  "HS&E",
+  "IWS",
+  "Line-1",
+  "Line-10",
+  "Line-2",
+  "Line-9",
+  "P&E CFS ENG",
+  "P&E Cairo/Karachi",
+  "PFSS",
+  "QA",
+  "Regional GMDSO",
+  "Regional Tech Pack",
+  "RPM WH",
+  "Shave Care Operations",
+  "Shave Care Qualilty",
+  "Storeroom",
+  "TSG Matrix",
+  "TSM",
+  "Utilities",
+];
 function getPositionFromDepartment(department: string) {
   switch (department) {
     case "Engineering":
