@@ -474,7 +474,6 @@ export default function VirtualOfficeClient() {
                 ))}
               </div>
             </ScrollArea>
-            غ
           </TabsContent>
           <TabsContent value="profile" className="space-y-6">
             <Card className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-md rounded-lg">
