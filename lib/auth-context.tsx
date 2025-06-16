@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) return false;
       const responseData = await response.json();
+      console.log(responseData);
       const user = responseData.user;
       const token = responseData.token;
       setUser(user);
