@@ -1,12 +1,6 @@
 "use client";
-import { ChevronDown } from "lucide-react"; // تأكد إنك مستورد الأيقونة
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Send, Users, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, Paperclip } from "lucide-react";
 
 interface Message {
   id: string;
@@ -42,42 +36,28 @@ const ChatWithEve: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [eveData, setEveData] = useState<EveData | null>(null);
-  const [myEmployees, setMyEmployees] = useState<EveData[]>([]);
-  const [isFromOffice, setIsFromOffice] = useState(false);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const searchParams = useSearchParams();
+  const employeeIdFromUrl = searchParams.get("employeeId");
 
+  // ✅ تحميل المحادثات من localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const storedMessages = localStorage.getItem("chatMessages");
-    if (storedMessages) {
-      setMessages(JSON.parse(storedMessages));
-    }
     if (!token) {
       router.push("/");
       return;
     }
-    const loadEmployees = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              authorization: `employee${token}`,
-            },
-          }
-        );
-        const data = await res.json();
-        setMyEmployees(data.employees || []);
-      } catch (error) {
-        console.error("Error loading employees:", error);
-      }
-    };
 
-    loadEmployees();
-  }, []);
+    const storedMessages = localStorage.getItem(
+      `chatMessages-${employeeIdFromUrl}`
+    );
+    if (storedMessages) {
+      setMessages(JSON.parse(storedMessages));
+    }
+  }, [employeeIdFromUrl]);
 
+  // ✅ حفظ المحادثات في localStorage
   useEffect(() => {
     if (eveData?.id) {
       localStorage.setItem(
@@ -85,7 +65,50 @@ const ChatWithEve: React.FC = () => {
         JSON.stringify(messages)
       );
     }
-  }, [messages, eveData?.id]);
+  }, [messages, eveData]);
+
+  // ✅ جلب بيانات الموظف
+  useEffect(() => {
+    const fetchEmployeeData = async () => {
+      if (!employeeIdFromUrl) return;
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${employeeIdFromUrl}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization: `employee${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch employee data");
+
+        const data = await res.json();
+        console.log("EMPLOYEE DATA", data);
+        setEveData(data);
+      } catch (error) {
+        console.error("Error fetching employee data:", error);
+        toast({
+          title: "Error",
+          description: "Could not load employee data.",
+          variant: "destructive",
+        });
+
+        // 👇 بيانات وهمية لو فشل التحميل
+        setEveData({
+          id: employeeIdFromUrl || "",
+          name: "Unknown Employee",
+          department: "N/A",
+          introduction: "",
+          status: "Offline",
+        });
+      }
+    };
+
+    fetchEmployeeData();
+  }, [employeeIdFromUrl]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -95,15 +118,14 @@ const ChatWithEve: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
+    if (!input.trim() && !file) return;
     if (!eveData?.id) {
       toast({
-        title: "Please select an employee",
-        description: "You must select an employee before sending a message.",
+        title: "Select an employee first",
         variant: "destructive",
       });
       return;
     }
-    if (!input.trim() && !file) return;
 
     const timestamp = new Date();
     const userMessage: Message = {
@@ -112,19 +134,22 @@ const ChatWithEve: React.FC = () => {
       content: file ? "Sent a file" : input,
       timestamp,
       type: file ? "file" : "text",
-      ...(file && { fileUrl: URL.createObjectURL(file), fileName: file.name }),
+      ...(file && {
+        fileUrl: URL.createObjectURL(file),
+        fileName: file.name,
+      }),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+
     try {
       const formData = new FormData();
       if (file) formData.append("file", file);
       formData.append("message", input);
       formData.append("employeeId", eveData.id);
-
-      const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
         method: "POST",
         headers: {
           authorization: `employee${localStorage.getItem("token")}`,
@@ -132,20 +157,12 @@ const ChatWithEve: React.FC = () => {
         body: formData,
       });
 
-      if (!data) {
-        toast({
-          title: "Error",
-          description: "No response from EVE.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const responseData = await res.json();
 
-      const res = await data.json();
       const eveResponse: Message = {
         id: (Date.now() + 1).toString(),
         sender: "eve",
-        content: res.reply,
+        content: responseData.reply,
         timestamp: new Date(),
         type: "text",
       };
@@ -166,19 +183,18 @@ const ChatWithEve: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 dark:from-gray-900 dark:to-gray-800">
+      {/* Header */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-b border-white/10">
-        <div className="container mx-auto flex items-center justify-between overflow-x-auto">
+        <div className="container mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
             className="text-white hover:text-white/80 hover:bg-white/10"
-            onClick={() =>
-              router.push(isFromOffice ? "/virtual-office" : "/home")
-            }
+            onClick={() => router.push("/home")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-4 min-w-0">
-            <Avatar className="h-10 w-10 shrink-0">
+            <Avatar className="h-10 w-10">
               {eveData?.photoUrl ? (
                 <AvatarImage src={eveData.photoUrl} alt="employee avatar" />
               ) : (
@@ -187,7 +203,6 @@ const ChatWithEve: React.FC = () => {
                 </AvatarFallback>
               )}
             </Avatar>
-
             <div className="truncate">
               <h2 className="text-lg font-semibold text-white truncate">
                 {eveData?.name || "EVE"}
@@ -196,7 +211,6 @@ const ChatWithEve: React.FC = () => {
                 <p className="text-sm text-blue-200 truncate">
                   {eveData?.department || "AI Assistant"}
                 </p>
-
                 {eveData?.status && (
                   <Badge
                     variant="outline"
@@ -208,58 +222,11 @@ const ChatWithEve: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 shrink-0">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-white border-white/20 hover:bg-white/10 p-2"
-                >
-                  <ChevronDown className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 bg-white text-black">
-                <h4 className="font-semibold mb-2">Employees List</h4>
-                <ul className="space-y-1 max-h-60 overflow-y-auto">
-                  {myEmployees.length === 0 ? (
-                    <p className="text-sm text-gray-500">No employees found.</p>
-                  ) : (
-                    myEmployees.map((emp) => (
-                      <li
-                        key={emp.id}
-                        className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                        onClick={() => {
-                          setEveData(emp);
-                          setMessages([]);
-                          toast({ title: `Now chatting with ${emp.name}` });
-                        }}
-                      >
-                        <p className="font-medium">{emp.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {emp.department}
-                        </p>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </PopoverContent>
-            </Popover>
-
-            {isFromOffice && (
-              <Button
-                variant="outline"
-                className="text-white border-white/20 hover:bg-white/10"
-                onClick={() => router.push("/virtual-office")}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Office
-              </Button>
-            )}
-          </div>
+          <div className="w-10" />
         </div>
       </div>
 
+      {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.map((msg) => (
@@ -270,7 +237,7 @@ const ChatWithEve: React.FC = () => {
               }`}
             >
               <Card
-                className={`max-w-md rounded-2xl px-3 py-2 ${
+                className={`max-w-md rounded-2xl px-3 py-2 shadow-md ${
                   msg.sender === "user"
                     ? "bg-blue-600 text-white"
                     : "bg-white/10 text-white backdrop-blur"
@@ -302,24 +269,21 @@ const ChatWithEve: React.FC = () => {
         </div>
       </ScrollArea>
 
+      {/* Input */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-t border-white/10">
-        <div className="container mx-auto max-w-4xl flex gap-2">
+        <div className="container mx-auto max-w-4xl flex items-center gap-2">
           <Input
             type="text"
-            placeholder={
-              eveData?.name
-                ? `Message ${eveData.name}...`
-                : "Select an employee first..."
-            }
+            placeholder={`Message ${eveData?.name || "EVE"}...`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={!eveData?.id}
-            className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:ring-white focus:border-white"
+            className="flex-1 bg-white/10 border border-white/30 text-white placeholder:text-white/50"
           />
           <input
             ref={fileInputRef}
             type="file"
+            hidden
             onChange={(e) => {
               const selected = e.target.files?.[0];
               if (selected) {
@@ -330,19 +294,18 @@ const ChatWithEve: React.FC = () => {
                 });
               }
             }}
-            hidden
           />
           <Button
             variant="ghost"
-            className="text-white"
+            className="text-white hover:bg-white/10"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Paperclip />
+            <Paperclip className="h-5 w-5" />
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={(!input.trim() && !file) || isLoading || !eveData?.id}
-            className="bg-blue-600 hover:bg-blue-700"
+            disabled={(!input.trim() && !file) || isLoading}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Send className="h-4 w-4" />
           </Button>

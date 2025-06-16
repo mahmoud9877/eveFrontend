@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserPlus, MessageSquare, Users, LogOut, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { token } from "@/utils/fetchWithAuth";
 
 interface HomePageProps {
   user: any;
@@ -28,38 +27,57 @@ export default function HomePage({ user }: HomePageProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   useEffect(() => {
     const checkIfEveCreated = async () => {
-      // 1. جرب تجيب من localStorage الأول
       const storedEve = localStorage.getItem("eveEmployee");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("No token found in localStorage");
+        setHasCreatedEve(false);
+        return;
+      }
+
       if (storedEve) {
         try {
           const parsed = JSON.parse(storedEve);
           const employee = parsed?.employee;
           if (employee) {
             setHasCreatedEve(true);
-            return; // طالما لقيت الموظف محليًا، مش محتاج تكلم السيرفر
+            return;
           }
         } catch (err) {
           // ignore parsing error and continue to fetch
         }
       }
 
-      // 2. لو مالقيناش حاجة في localStorage، جرب تجيب من الباك إند
       try {
-        const data = await fetch(
+        const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
           {
             headers: {
-              authorization: token,
+              "Content-Type": "application/json",
+              authorization: `employee${token}`,
             },
           }
         );
-        setHasCreatedEve(!!data); // true لو لقى موظف، false لو لأ
+
+        // لو مش OK أو الرد مش JSON، نطبع الرسالة نص
+        const contentType = response.headers.get("content-type");
+        const isJson = contentType && contentType.includes("application/json");
+
+        if (!isJson) {
+          const errorText = await response.text();
+          console.error("Non-JSON response:", errorText);
+          setHasCreatedEve(false);
+          return;
+        }
+
+        const result = await response.json();
+        console.log("result", result);
+        setHasCreatedEve(!!result?.employees);
       } catch (err) {
         console.error("Error checking my employee:", err);
         setHasCreatedEve(false);
       }
     };
-
     checkIfEveCreated();
   }, [user]);
 

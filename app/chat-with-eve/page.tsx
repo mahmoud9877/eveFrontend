@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useAuth, withAuth } from "@/lib/auth-context"
-import ChatWithEve from "@/components/chat-with-eve"
+import { useAuth, withAuth } from "@/lib/auth-context";
+import ChatWithEve from "@/components/chat-with-eve";
 
 function ChatWithEvePage() {
-  const { user } = useAuth()
-  return <ChatWithEve user={user} />
+  const { user } = useAuth();
+  return <ChatWithEve user={user} />;
 }
 
-export default withAuth(ChatWithEvePage)
+export default withAuth(ChatWithEvePage);

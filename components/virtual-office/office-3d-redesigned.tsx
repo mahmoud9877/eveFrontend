@@ -581,12 +581,6 @@ export default function Office3DRedesigned({ employees = [] }) {
                   <p className="text-sm text-gray-300">
                     {selectedEmployee.department}
                   </p>
-                  <Badge
-                    variant={selectedEmployee.isAI ? "secondary" : "outline"}
-                    className="text-xs"
-                  >
-                    {selectedEmployee.isAI ? "AI Assistant" : "Human"}
-                  </Badge>
                 </div>
               </div>
 
@@ -595,20 +589,26 @@ export default function Office3DRedesigned({ employees = [] }) {
                   {selectedEmployee.introduction}
                 </p>
               )}
-
               <div className="space-y-2">
                 <Button
                   size="sm"
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  onClick={() => handleChatWithEmployee(selectedEmployee)}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                  onClick={() => {
+                    if (selectedEmployee?.id) {
+                      router.push(`/chat?employeeId=${selectedEmployee.id}`);
+                    } else {
+                      toast({
+                        title: "No employee selected",
+                        description:
+                          "Please choose an employee to start a chat.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Start Chat
                 </Button>
-                {/* <Button size="sm" variant="outline" className="w-full text-white border-white/30 hover:bg-white/20">
-                  <Video className="h-4 w-4 mr-2" />
-                  Video Call
-                </Button> */}
               </div>
 
               <Button

@@ -44,7 +44,6 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Office3DRedesigned from "./office-3d-redesigned";
-import { token } from "@/utils/fetchWithAuth";
 
 const departments = [
   "CF PS HR MFG & Purchases",
@@ -109,16 +108,18 @@ export default function VirtualOfficeClient() {
 
   useEffect(() => {
     const fetchAllEmployees = async () => {
+      const token = localStorage.getItem("token");
       try {
-        const response = await fetch(
+        const data = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
           {
             headers: {
               "Content-Type": "application/json",
-              authorization: token,
+              authorization: `employee${token}`,
             },
           }
         );
+        const response = await data.json();
         if (response && response.employees) {
           console.log("ALL EMPLOYEES", response.employees);
           setEmployees(response.employees || []);
@@ -136,16 +137,22 @@ export default function VirtualOfficeClient() {
     };
 
     const fetchMyEmployees = async () => {
+      const token = localStorage.getItem("token");
       try {
-        const response = await fetch(
+        const data = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {},
-          logout
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization: `employee${token}`,
+            },
+          }
         );
 
-        if (response && response.eveEmployee) {
-          console.log("MY EMPLOYEES", response.eveEmployee);
-          setMyEmployees(response.eveEmployee);
+        const response = await data.json();
+        if (response && response.employees) {
+          console.log("MY EMPLOYEES", response.employees);
+          setMyEmployees(response.employees);
         } else {
           throw new Error(response?.message || "Something went wrong");
         }
@@ -158,7 +165,6 @@ export default function VirtualOfficeClient() {
         });
       }
     };
-
     fetchAllEmployees();
     fetchMyEmployees();
   }, []);
@@ -169,20 +175,24 @@ export default function VirtualOfficeClient() {
     try {
       if (!myEmployee) throw new Error("Employee data not loaded");
 
-      const updateRes = await fetch(
+      const data = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployee.id}`,
         {
           method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `employee${localStorage.getItem("token")}`,
+          },
           body: JSON.stringify({
             name: myEmployee.name,
             department_office: myEmployee.department_office,
             role: myEmployee.role,
             status: myEmployee.status,
           }),
-        },
-        logout
+        }
       );
 
+      const updateRes = await data.json();
       if (!updateRes || updateRes.error) {
         throw new Error(updateRes.message || "Failed to update employee");
       }
@@ -207,11 +217,11 @@ export default function VirtualOfficeClient() {
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (emp.department &&
-        emp.department.toLowerCase().includes(searchTerm.toLowerCase()));
+      (emp.department_office &&
+        emp.department_office.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDepartment =
       selectedDepartment === "All Departments" ||
-      emp.department === selectedDepartment;
+      emp.department_office === selectedDepartment;
     return matchesSearch && matchesDepartment;
   });
 
@@ -329,7 +339,7 @@ export default function VirtualOfficeClient() {
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Chat Card */}
-              <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
+              {/* <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center text-gray-800 font-medium">
                     <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
@@ -344,7 +354,7 @@ export default function VirtualOfficeClient() {
                     Start Conversation
                   </Button>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Team Status Card */}
               <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
@@ -399,14 +409,16 @@ export default function VirtualOfficeClient() {
                 </SelectContent>
               </Select>
             </div>
-
             {/* Employees Grid */}
             <ScrollArea className="h-[600px] pr-2">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEmployees.map((employee) => (
                   <Card
                     key={employee.id}
-                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg"
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg cursor-pointer"
+                    onClick={() =>
+                      router.push(`/chat?employeeId=${employee.id}`)
+                    }
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center space-x-3">
@@ -438,12 +450,14 @@ export default function VirtualOfficeClient() {
                         >
                           {employee.isAI ? "AI Assistant" : "Human"}
                         </Badge>
-
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-200"
-                          onClick={() => router.push("/chat-with-eve")}
+                          onClick={(e) => {
+                            e.stopPropagation(); // لمنع تفعيل onClick للكارت عند الضغط على الزر
+                            router.push(`/chat?employeeId=${employee.id}`); // ✅
+                          }}
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
@@ -460,6 +474,7 @@ export default function VirtualOfficeClient() {
                 ))}
               </div>
             </ScrollArea>
+            غ
           </TabsContent>
           <TabsContent value="profile" className="space-y-6">
             <Card className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-md rounded-lg">

@@ -574,20 +574,20 @@ export default function Office3D({ employees = [] }) {
               <div className="space-y-2">
                 <Button
                   size="sm"
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => handleChatWithEmployee(selectedEmployee)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    if (selectedEmployee?.id) {
+                      router.push(`/chat?employeeId=${selectedEmployee.id}`);
+                    } else {
+                      toast({
+                        title: "Please select an employee first",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
-                  <MessageSquare className="h-4 w-4 mr-2" />
                   Start Chat
                 </Button>
-                {/* <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full text-white border-white/30 hover:bg-white/20"
-                >
-                  <Video className="h-4 w-4 mr-2" />
-                  Video Call
-                </Button> */}
               </div>
 
               <Button

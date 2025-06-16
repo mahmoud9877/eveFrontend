@@ -22,12 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import * as z from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { token } from "@/utils/fetchWithAuth";
 import { useAuth } from "@/lib/auth-context";
+import Image from "next/image";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -42,19 +42,6 @@ const formSchema = z.object({
 });
 
 const departments = ["Engineering", "Marketing", "Sales", "Human Resources"];
-
-type EveEmployee = {
-  id: number;
-  name: string;
-  department: string;
-  position: string;
-  knowledgeText: string;
-  department_office: string;
-  status: string;
-  createdBy: number;
-  createdAt: string;
-  updatedAt: string;
-};
 
 function getPositionFromDepartment(department: string) {
   switch (department) {
@@ -75,8 +62,9 @@ const CreateEveForm = () => {
   const router = useRouter();
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { logout } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string>("");
+
   const {
     register,
     handleSubmit,
@@ -91,24 +79,34 @@ const CreateEveForm = () => {
     },
   });
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    setPhotoUrl(localUrl);
+  };
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-
     try {
       const position = getPositionFromDepartment(data.department);
-      const fullData = { ...data, position };
-
+      const fullData = {
+        ...data,
+        position,
+        photoUrl, // ⬅️ إضافة رابط الصورة
+      };
       console.log("📤 Sending data to backend:", fullData);
-
       localStorage.setItem("eveEmployee", JSON.stringify(fullData));
 
+      const token = localStorage.getItem("token");
+
       const response = await fetch(
-        process.env.NEXT_PUBLIC_BASE_URL + "/eve-employee",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            authorization: token,
+            authorization: `employee${token}`,
           },
           body: JSON.stringify(fullData),
         }
@@ -116,14 +114,8 @@ const CreateEveForm = () => {
 
       const result = await response.json();
 
-      console.log("📥 Response from backend:", result);
-
       if (!response.ok || result.error) {
-        console.error(
-          "❌ Backend returned error:",
-          result?.error || "Unknown error"
-        );
-        throw new Error("Failed to create employee.");
+        throw new Error(result?.error || "Failed to create employee.");
       }
 
       toast({
@@ -133,8 +125,6 @@ const CreateEveForm = () => {
 
       router.push("/chat-with-eve");
     } catch (error: any) {
-      console.error("❌ Error in onSubmit:", error);
-
       toast({
         title: "Error",
         description:
@@ -147,7 +137,6 @@ const CreateEveForm = () => {
   };
 
   return (
-    // <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 dark">
       <div className="container mx-auto max-w-3xl">
         <Button
@@ -218,6 +207,31 @@ const CreateEveForm = () => {
                       </p>
                     )}
                   </div>
+                </div>
+
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <div className="w-40 h-40 rounded-full overflow-hidden bg-white/20 mb-4 relative">
+                    <Image
+                      src={photoUrl || "/placeholder.svg"}
+                      alt="EVE Avatar"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <Label
+                    htmlFor="photo"
+                    className="cursor-pointer bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-md flex items-center"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t("createEve.uploadPhoto")}
+                  </Label>
+                  <Input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
                 </div>
               </div>
 
