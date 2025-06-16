@@ -26,7 +26,7 @@ import { ArrowLeft } from "lucide-react";
 import * as z from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { token } from "@/utils/fetchWithAuth";
 import { useAuth } from "@/lib/auth-context";
 
 const formSchema = z.object({
@@ -93,27 +93,35 @@ const CreateEveForm = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+
     try {
       const position = getPositionFromDepartment(data.department);
       const fullData = { ...data, position };
+
       console.log("📤 Sending data to backend:", fullData);
+
       localStorage.setItem("eveEmployee", JSON.stringify(fullData));
-      const response = await fetchWithAuth(
-        process.env.NEXT_PUBLIC_BASE_URL + "/eve-employee", // ✅ استخدم متغير البيئة بدل localhost
+
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_BASE_URL + "/eve-employee",
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: token,
+          },
           body: JSON.stringify(fullData),
-        },
-        logout // ← ده الكولباك لو التوكن فشل يتجدد
+        }
       );
 
-      console.log("📥 Response from backend:", response);
+      const result = await response.json();
 
-      // ✅ Check if the response is valid and has expected structure
-      if (!response || response.error) {
+      console.log("📥 Response from backend:", result);
+
+      if (!response.ok || result.error) {
         console.error(
           "❌ Backend returned error:",
-          response?.error || "Unknown error"
+          result?.error || "Unknown error"
         );
         throw new Error("Failed to create employee.");
       }
@@ -126,6 +134,7 @@ const CreateEveForm = () => {
       router.push("/chat-with-eve");
     } catch (error: any) {
       console.error("❌ Error in onSubmit:", error);
+
       toast({
         title: "Error",
         description:

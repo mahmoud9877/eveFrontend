@@ -57,8 +57,7 @@ const ChatWithEve: React.FC = () => {
     if (storedMessages) {
       setMessages(JSON.parse(storedMessages));
     }
-
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem("token");
     if (!token) {
       router.push("/");
       return;

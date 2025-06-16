@@ -71,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ email, password }),
         }
       );
@@ -79,10 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!response.ok) return false;
       const responseData = await response.json();
       const user = responseData.user;
-      const accessToken = responseData.accessToken;
+      const token = responseData.token;
       setUser(user);
       localStorage.setItem("eve-user", JSON.stringify(user));
-      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("token", token);
 
       return true;
     } catch (error) {
@@ -91,21 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // تسجيل الخروج
   const logout = async () => {
     setUser(null);
-    localStorage.removeItem("accessToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("eve-user");
-
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (err) {
-      console.error("Logout request failed:", err);
-    }
-
     router.push("/");
   };
 
