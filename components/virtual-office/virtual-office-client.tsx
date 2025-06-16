@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Office3DRedesigned from "./office-3d-redesigned";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { token } from "@/utils/fetchWithAuth";
 
 const departments = [
   "CF PS HR MFG & Purchases",
@@ -110,10 +110,14 @@ export default function VirtualOfficeClient() {
   useEffect(() => {
     const fetchAllEmployees = async () => {
       try {
-        const response = await fetchWithAuth(
+        const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
-          {},
-          logout
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization: token,
+            },
+          }
         );
         if (response && response.employees) {
           console.log("ALL EMPLOYEES", response.employees);
@@ -133,7 +137,7 @@ export default function VirtualOfficeClient() {
 
     const fetchMyEmployees = async () => {
       try {
-        const response = await fetchWithAuth(
+        const response = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
           {},
           logout
@@ -165,7 +169,7 @@ export default function VirtualOfficeClient() {
     try {
       if (!myEmployee) throw new Error("Employee data not loaded");
 
-      const updateRes = await fetchWithAuth(
+      const updateRes = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployee.id}`,
         {
           method: "PUT",

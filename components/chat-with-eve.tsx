@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { ArrowLeft, Send, Users, Paperclip } from "lucide-react";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { token } from "@/utils/fetchWithAuth";
 import { useAuth } from "@/lib/auth-context";
 
 interface Message {
@@ -64,10 +64,14 @@ const ChatWithEve: React.FC = () => {
     }
     const loadEmployees = async () => {
       try {
-        const data = await fetchWithAuth(
+        const data = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {},
-          logout
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization: token,
+            },
+          }
         );
         console.log("kol el employees", data.eveEmployee);
         // setEveData(data.eveEmployee);
@@ -82,7 +86,10 @@ const ChatWithEve: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("chatMessages", JSON.stringify(messages));
+    localStorage.setItem(
+      `chatMessages-${eveData?.id}`,
+      JSON.stringify(messages)
+    );
   }, [messages]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -113,14 +120,14 @@ const ChatWithEve: React.FC = () => {
       formData.append("message", input); // ممكن تبعت محتوى النص لو فيه
       formData.append("employeeId", myEmployees?.id);
 
-      const data = await fetchWithAuth(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/chat`,
-        {
-          method: "POST",
-          body: formData,
+      const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+          authorization: token,
         },
-        logout
-      );
+        body: formData,
+      });
 
       if (!data) {
         toast({

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserPlus, MessageSquare, Users, LogOut, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { token } from "@/utils/fetchWithAuth";
 
 interface HomePageProps {
   user: any;
@@ -45,10 +45,13 @@ export default function HomePage({ user }: HomePageProps) {
 
       // 2. لو مالقيناش حاجة في localStorage، جرب تجيب من الباك إند
       try {
-        const data = await fetchWithAuth(
+        const data = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {},
-          logout
+          {
+            headers: {
+              authorization: token,
+            },
+          }
         );
         setHasCreatedEve(!!data); // true لو لقى موظف، false لو لأ
       } catch (err) {
