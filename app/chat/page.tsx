@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ interface EveData {
   status?: string;
 }
 
-const ChatWithEve: React.FC = () => {
+const ChatContent = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -41,7 +42,6 @@ const ChatWithEve: React.FC = () => {
   const searchParams = useSearchParams();
   const employeeIdFromUrl = searchParams.get("employeeId");
 
-  // ✅ تحميل المحادثات من localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -57,7 +57,6 @@ const ChatWithEve: React.FC = () => {
     }
   }, [employeeIdFromUrl]);
 
-  // ✅ حفظ المحادثات في localStorage
   useEffect(() => {
     if (eveData?.id) {
       localStorage.setItem(
@@ -67,7 +66,6 @@ const ChatWithEve: React.FC = () => {
     }
   }, [messages, eveData]);
 
-  // ✅ جلب بيانات الموظف
   useEffect(() => {
     const fetchEmployeeData = async () => {
       if (!employeeIdFromUrl) return;
@@ -86,7 +84,6 @@ const ChatWithEve: React.FC = () => {
         if (!res.ok) throw new Error("Failed to fetch employee data");
 
         const data = await res.json();
-        console.log("EMPLOYEE DATA", data);
         setEveData(data);
       } catch (error) {
         console.error("Error fetching employee data:", error);
@@ -96,7 +93,6 @@ const ChatWithEve: React.FC = () => {
           variant: "destructive",
         });
 
-        // 👇 بيانات وهمية لو فشل التحميل
         setEveData({
           id: employeeIdFromUrl || "",
           name: "Unknown Employee",
@@ -183,7 +179,6 @@ const ChatWithEve: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-b border-white/10">
         <div className="container mx-auto flex items-center justify-between">
           <Button
@@ -226,7 +221,6 @@ const ChatWithEve: React.FC = () => {
         </div>
       </div>
 
-      {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.map((msg) => (
@@ -269,7 +263,6 @@ const ChatWithEve: React.FC = () => {
         </div>
       </ScrollArea>
 
-      {/* Input */}
       <div className="bg-black/30 backdrop-blur-sm p-4 border-t border-white/10">
         <div className="container mx-auto max-w-4xl flex items-center gap-2">
           <Input
@@ -315,4 +308,10 @@ const ChatWithEve: React.FC = () => {
   );
 };
 
-export default ChatWithEve;
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="text-white p-4">Loading...</div>}>
+      <ChatContent />
+    </Suspense>
+  );
+}
