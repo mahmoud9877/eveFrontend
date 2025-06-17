@@ -61,6 +61,11 @@ const departments = [
   "QA",
   "Regional GMDSO",
   "Regional Tech Pack",
+  "Engineering",
+  "Marketing",
+  "Sales",
+  "Human Resources",
+  "General Employee",
   "RPM WH",
   "Shave Care Operations",
   "Shave Care Qualilty",
@@ -69,20 +74,6 @@ const departments = [
   "TSM",
   "Utilities",
 ];
-function getPositionFromDepartment(department: string) {
-  switch (department) {
-    case "Engineering":
-      return "Software Engineer";
-    case "Marketing":
-      return "Marketing Specialist";
-    case "Sales":
-      return "Sales Representative";
-    case "Human Resources":
-      return "HR Generalist";
-    default:
-      return "General Employee";
-  }
-}
 
 const CreateEveForm = () => {
   const router = useRouter();
@@ -115,11 +106,10 @@ const CreateEveForm = () => {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      const position = getPositionFromDepartment(data.department);
       const fullData = {
         ...data,
-        position,
-        photoUrl, // ⬅️ إضافة رابط الصورة
+        department: data.department,
+        photoUrl,
       };
       console.log("📤 Sending data to backend:", fullData);
       localStorage.setItem("eveEmployee", JSON.stringify(fullData));
