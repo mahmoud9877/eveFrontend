@@ -102,6 +102,11 @@ const CreateEveForm = () => {
     const localUrl = URL.createObjectURL(file);
     setPhotoUrl(localUrl);
   };
+    const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -163,6 +168,26 @@ const CreateEveForm = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t("common.back")}
         </Button>
+              <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="border-gray-300 dark:border-gray-600 text-sm"
+              onClick={toggleLanguage}
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              {i18n.language === "en" ? "عربي" : "English"}
+            </Button>
+            <Button
+              variant="outline"
+              className="border-gray-300 dark:border-gray-600 text-sm"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              {isLoggingOut ? t("home.loggingOut") : t("home.logout")}
+            </Button>
+          </div>
+        </div>
 
         <Card className="bg-white/10 backdrop-blur-md border-none text-white">
           <CardHeader>
