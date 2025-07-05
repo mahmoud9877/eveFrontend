@@ -148,7 +148,6 @@ export default function VirtualOfficeClient() {
     }
   };
 
-  // ✅ Fetch all employees
   const fetchAllEmployees = async (forceRefresh = false) => {
     const token = localStorage.getItem("token");
     const cached = localStorage.getItem("allEmployees");
