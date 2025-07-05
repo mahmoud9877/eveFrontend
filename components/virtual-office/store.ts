@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { departments } from "../create-eve-form";
 import { persist } from "zustand/middleware";
 
 export type User = {
@@ -147,18 +148,6 @@ export const useVirtualOfficeStore = create<VirtualOfficeState>()(
           }
 
           // Add some demo EVE employees for a populated office
-          const departments = [
-            "HR",
-            "IT",
-            "QA",
-            "Line-10",
-            "F&A",
-            "P&E CFS ENG",
-            "Shave Care Operations",
-            "CF PS HR MFG & Purchases",
-            "GMDSO",
-            "HS&E",
-          ];
 
           // Add 10 random EVE employees
           for (let i = 0; i < 10; i++) {
@@ -204,7 +193,6 @@ export const useVirtualOfficeStore = create<VirtualOfficeState>()(
     }),
     {
       name: "virtual-office-storage",
-      // getStorage: () => sessionStorage, // (optional) by default the 'localStorage' is used
     }
   )
 );

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { departments } from "../create-eve-form";
 import {
   Popover,
   PopoverContent,
@@ -33,7 +35,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users,
   MessageSquare,
-  Video,
   Search,
   Building,
   MapPin,
@@ -44,35 +45,6 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import Office3DRedesigned from "./office-3d-redesigned";
-
-const departments = [
-  "CF PS HR MFG & Purchases",
-  "CF PS MFG EGYPT",
-  "F&A",
-  "FPWH",
-  "General Operations",
-  "GMDSO",
-  "HR",
-  "HS&E",
-  "IWS",
-  "Line-1",
-  "Line-10",
-  "Line-2",
-  "Line-9",
-  "P&E CFS ENG",
-  "P&E Cairo/Karachi",
-  "PFSS",
-  "QA",
-  "Regional GMDSO",
-  "Regional Tech Pack",
-  "RPM WH",
-  "Shave Care Operations",
-  "Shave Care Qualilty",
-  "Storeroom",
-  "TSG Matrix",
-  "TSM",
-  "Utilities",
-];
 
 type EveEmployee = {
   id: number;
@@ -98,84 +70,111 @@ export default function VirtualOfficeClient() {
   const [selectedDepartment, setSelectedDepartment] =
     useState("All Departments");
   const [employees, setEmployees] = useState<EveEmployee[]>([]);
-  const [myEmployee, setMyEmployee] = useState<EveEmployee | null>(null);
+  const [myEmployeeSelected, setMyEmployeesSelected] =
+    useState<EveEmployee | null>(null);
   const [myEmployees, setMyEmployees] = useState<EveEmployee[]>([]);
-  const [eveData, setEveData] = useState<EveEmployee | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { logout } = useAuth();
 
+  const fetchMyEmployees = async (forceRefresh = false) => {
+    const token = localStorage.getItem("token");
+    const cached = localStorage.getItem("myEmployees");
+
+    if (cached && !forceRefresh) {
+      try {
+        const parsed = JSON.parse(cached);
+        setMyEmployees(parsed);
+        return;
+      } catch {
+        // ignore parse error
+      }
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `employee${token}`,
+          },
+        }
+      );
+      const json = await res.json();
+      if (json && json.employees) {
+        setMyEmployees(json.employees);
+        localStorage.setItem("myEmployees", JSON.stringify(json.employees));
+      } else {
+        throw new Error(json?.message || "Something went wrong");
+      }
+    } catch (error) {
+      console.error("Failed to fetch my employee:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch your employee data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ✅ Fetch all employees
+  const fetchAllEmployees = async (forceRefresh = false) => {
+    const token = localStorage.getItem("token");
+    const cached = localStorage.getItem("allEmployees");
+
+    if (cached && !forceRefresh) {
+      try {
+        const parsed = JSON.parse(cached);
+        setEmployees(parsed);
+        return;
+      } catch {
+        // ignore parse error
+      }
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `employee${token}`,
+          },
+        }
+      );
+      const json = await res.json();
+      if (json && json.employees) {
+        setEmployees(json.employees);
+        localStorage.setItem("allEmployees", JSON.stringify(json.employees));
+      } else {
+        throw new Error("No employees found");
+      }
+    } catch (error) {
+      console.error("Failed to fetch all employees:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ✅ useEffect on mount
   useEffect(() => {
-    const fetchAllEmployees = async () => {
-      const token = localStorage.getItem("token");
-      try {
-        const data = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              authorization: `employee${token}`,
-            },
-          }
-        );
-        const response = await data.json();
-        if (response && response.employees) {
-          console.log("ALL EMPLOYEES", response.employees);
-          setEmployees(response.employees || []);
-        } else {
-          throw new Error("No employees found");
-        }
-      } catch (error) {
-        console.error("Failed to fetch all employees:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch employees",
-          variant: "destructive",
-        });
-      }
-    };
-
-    const fetchMyEmployees = async () => {
-      const token = localStorage.getItem("token");
-      try {
-        const data = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              authorization: `employee${token}`,
-            },
-          }
-        );
-
-        const response = await data.json();
-        if (response && response.employees) {
-          console.log("MY EMPLOYEES", response.employees);
-          setMyEmployees(response.employees);
-        } else {
-          throw new Error(response?.message || "Something went wrong");
-        }
-      } catch (error) {
-        console.error("Failed to fetch my employee:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch your employee data",
-          variant: "destructive",
-        });
-      }
-    };
     fetchAllEmployees();
     fetchMyEmployees();
   }, []);
 
+  const handleSelectMyEmployee = (employee: EveEmployee) => {
+    setMyEmployeesSelected(employee);
+  };
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      if (!myEmployee) throw new Error("Employee data not loaded");
 
-      const data = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployee.id}`,
+    try {
+      if (!myEmployeeSelected) throw new Error("Employee data not loaded");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/${myEmployeeSelected.id}`,
         {
           method: "PUT",
           headers: {
@@ -183,18 +182,21 @@ export default function VirtualOfficeClient() {
             authorization: `employee${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
-            name: myEmployee.name,
-            department: myEmployee.department,
-            role: myEmployee.role,
-            status: myEmployee.status,
+            name: myEmployeeSelected.name,
+            department: myEmployeeSelected.department,
+            role: myEmployeeSelected.role,
+            status: myEmployeeSelected.status,
           }),
         }
       );
 
-      const updateRes = await data.json();
-      if (!updateRes || updateRes.error) {
-        throw new Error(updateRes.message || "Failed to update employee");
+      const json = await res.json();
+      if (!json || json.error) {
+        throw new Error(json.message || "Failed to update employee");
       }
+
+      await fetchMyEmployees(true);
+      await fetchAllEmployees(true);
 
       toast({
         title: "Profile Updated",
@@ -212,7 +214,6 @@ export default function VirtualOfficeClient() {
       setIsLoading(false);
     }
   };
-
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -230,33 +231,47 @@ export default function VirtualOfficeClient() {
     document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
   };
 
-  // if (!myEmployee) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
-  //         <p className="text-orange-600">Loading your profile...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white/10 backdrop-blur-sm"
+            style={{
+              width: Math.random() * 200 + 50,
+              height: Math.random() * 200 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              x: [0, Math.random() * 100 - 50],
+              y: [0, Math.random() * 100 - 50],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatType: "reverse",
+            }}
+          />
+        ))}
+      </div>
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg p-4">
+      <div className="relative bg-gradient-to-r from-[#1e1e3f] via-[#2b254f] to-[#1b1b36] shadow-md p-4 border-b border-white/10 backdrop-blur-md">
         <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
           {/* Left Section */}
           <div className="flex items-center flex-wrap gap-4">
             <Button
               variant="ghost"
-              className="text-white hover:text-white/80 hover:bg-white/10 p-2"
+              className="text-white hover:text-white/80 hover:bg-white/10 p-2 transition"
               onClick={() => router.push("/home")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <Building className="h-6 w-6 text-white" />
+              <Building className="h-6 w-6 text-indigo-400" />
               <h1 className="text-lg md:text-xl font-semibold text-white whitespace-nowrap">
                 Pixel Virtual Office
               </h1>
@@ -269,65 +284,61 @@ export default function VirtualOfficeClient() {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              className="text-white hover:text-white/80 hover:bg-white/10"
+              className="text-white hover:text-white/80 hover:bg-white/10 transition"
             >
               <Globe className="h-4 w-4 mr-1" />
               {i18n?.language === "en" ? "عربي" : "English"}
             </Button>
-            <div className="text-sm text-gray-300 whitespace-nowrap">
+            <div className="text-sm text-indigo-200 whitespace-nowrap">
               {t("virtualOffice.loggedInAs")}:{" "}
-              <span className="font-medium">{user?.name}</span>
+              <span className="font-medium text-white">{user?.name}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto p-4">
+      <div className="relative container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-600 rounded-lg shadow-sm overflow-hidden">
-            <TabsTrigger
-              value="office"
-              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
-            >
-              <Cube className="h-4 w-4 mr-2" />
-              Office
-            </TabsTrigger>
-            <TabsTrigger
-              value="people"
-              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Employees
-            </TabsTrigger>
-            <TabsTrigger
-              value="profile"
-              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
-            >
-              <UserCheck className="h-4 w-4 mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger
-              value="departments"
-              className="text-sm font-medium text-gray-300 hover:bg-gray-700/70 data-[state=active]:bg-gray-600 data-[state=active]:text-white py-2 flex items-center justify-center"
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              Departments
-            </TabsTrigger>
+          <TabsList className="relative grid w-full grid-cols-4 mb-6 rounded-xl bg-gradient-to-r from-[#2e2e5f] to-[#1e1e3f] border border-white/10 shadow-md overflow-hidden">
+            {[
+              { value: "office", icon: Cube, label: t("virtualOffice.office") },
+              {
+                value: "people",
+                icon: Users,
+                label: t("virtualOffice.employees"),
+              },
+              {
+                value: "profile",
+                icon: UserCheck,
+                label: t("virtualOffice.profile"),
+              },
+              {
+                value: "departments",
+                icon: MapPin,
+                label: t("virtualOffice.departments"),
+              },
+            ].map(({ value, icon: Icon, label }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="w-full h-full flex items-center justify-center text-sm font-medium text-indigo-200 hover:bg-white/10 data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all duration-200 ease-in-out"
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="office" className="space-y-6">
             {/* Main Office Card */}
-            <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-xl rounded-xl">
+            <Card className="bg-gradient-to-br from-[#1e1e3f] via-[#2e2e5f] to-[#1a1a36] border border-white/10 shadow-lg rounded-xl text-white">
               <CardHeader>
-                <CardTitle className="flex items-center text-gray-800 text-lg font-semibold">
-                  <Cube className="h-5 w-5 mr-2 text-blue-600" />
-                  Pixel Art Virtual Office Environment
+                <CardTitle className="flex items-center text-white text-lg font-semibold">
+                  <Cube className="h-5 w-5 mr-2 text-indigo-400" />
+                  {t("virtualOffice.pixelArt")}
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-sm leading-relaxed">
-                  Navigate through the pixel art office space inspired by
-                  classic 2D games. Click on the blue cubes to interact with
-                  different areas, or click on employee avatars to start
-                  conversations.
+                <CardDescription className="text-indigo-200 text-sm leading-relaxed">
+                  {t("virtualOffice.playNav")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -337,39 +348,21 @@ export default function VirtualOfficeClient() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Chat Card */}
-              {/* <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center text-gray-800 font-medium">
-                    <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                    Quick Chat
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white"
-                    onClick={() => router.push("/chat-with-eve")}
-                  >
-                    Start Conversation
-                  </Button>
-                </CardContent>
-              </Card> */}
-
               {/* Team Status Card */}
-              <Card className="bg-gradient-to-br from-white to-gray-100 border border-gray-200 shadow-sm rounded-lg">
+              <Card className="bg-gradient-to-br from-[#252547] to-[#1b1b36] border border-white/10 shadow-md rounded-lg text-white">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center text-gray-800 font-medium">
-                    <Users className="h-4 w-4 mr-2 text-green-600" />
-                    Team Status
+                  <CardTitle className="text-sm flex items-center text-white font-medium">
+                    <Users className="h-4 w-4 mr-2 text-green-400" />
+                    {t("virtualOffice.teamStatus")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">
-                      Online: {employees.length}
+                    <span className="text-sm text-indigo-200">
+                      {t("virtualOffice.online")}: {employees.length}
                     </span>
-                    <Badge className="bg-green-100 text-green-800">
-                      Active
+                    <Badge className="bg-green-200/10 text-green-300 border border-green-500/20">
+                      {t("virtualOffice.active")}
                     </Badge>
                   </div>
                 </CardContent>
@@ -377,13 +370,230 @@ export default function VirtualOfficeClient() {
             </div>
           </TabsContent>
 
+          <TabsContent value="profile" className="space-y-6 mt-6">
+            <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 shadow-lg rounded-2xl">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-gray-900 text-xl font-semibold">
+                      {t("virtualOffice.updateYourEmployeeProfile")}
+                    </CardTitle>
+                    <CardDescription className="text-gray-700 text-sm">
+                      {t("virtualOffice.lProfile")}
+                    </CardDescription>
+                  </div>
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="bg-gray-800 text-white hover:bg-gray-900 transition-all px-4 py-1 rounded-md shadow"
+                      >
+                        {t("virtualOffice.selectEmployee")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 bg-white text-gray-900 shadow-xl border border-gray-300 rounded-xl">
+                      <h4 className="font-semibold mb-3 text-lg">
+                        {t("virtualOffice.employeesList")}
+                      </h4>
+                      <ul className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {myEmployees?.length === 0 ? (
+                          <p className="text-sm text-gray-500">
+                            {t("virtualOffice.noEmployeesFound")}
+                          </p>
+                        ) : (
+                          myEmployees.map((emp) => (
+                            <li
+                              key={emp.id}
+                              className="cursor-pointer hover:bg-gray-100 p-2 rounded-md border border-gray-200 transition-all"
+                              onClick={() => {
+                                handleSelectMyEmployee(emp);
+                                setMessages([]);
+                                toast({
+                                  title: `Now editing ${emp.name}'s profile`,
+                                });
+                              }}
+                            >
+                              <p className="font-medium text-gray-800">
+                                {emp.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {emp.department}
+                              </p>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                  {/* Name */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="name"
+                      className="text-sm text-gray-800 font-semibold"
+                    >
+                      {t("createEve.name")}
+                    </Label>
+                    <Input
+                      id="name"
+                      required
+                      value={myEmployeeSelected?.name || ""}
+                      onChange={(e) =>
+                        setMyEmployeesSelected((prev) =>
+                          prev ? { ...prev, name: e.target.value } : prev
+                        )
+                      }
+                      className="border-gray-300 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 rounded-md"
+                      placeholder={t("createEve.name")}
+                    />
+                  </div>
+
+                  {/* Department */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="department"
+                      className="text-sm text-gray-800 font-semibold"
+                    >
+                      {t("virtualOffice.department")}
+                    </Label>
+                    <Select
+                      value={myEmployeeSelected?.department || ""}
+                      onValueChange={(value) =>
+                        myEmployeeSelected &&
+                        setMyEmployeesSelected({
+                          ...myEmployeeSelected,
+                          department: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-500 rounded-md">
+                        <SelectValue
+                          placeholder={t("virtualOffice.departmentPlaceholder")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Role */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="role"
+                      className="text-sm text-gray-800 font-semibold"
+                    >
+                      {t("virtualOffice.role")}
+                    </Label>
+                    <Input
+                      id="role"
+                      required
+                      value={myEmployeeSelected?.role || ""}
+                      onChange={(e) =>
+                        myEmployeeSelected &&
+                        setMyEmployeesSelected({
+                          ...myEmployeeSelected,
+                          role: e.target.value,
+                        })
+                      }
+                      className="border-gray-300 focus:ring-2 focus:ring-gray-500 rounded-md"
+                      placeholder={t("virtualOffice.exampleRole")}
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="status"
+                      className="text-sm text-gray-800 font-semibold"
+                    >
+                      {t("virtualOffice.status")}
+                    </Label>
+                    <Select
+                      value={myEmployeeSelected?.status || "online"}
+                      onValueChange={(value) =>
+                        myEmployeeSelected &&
+                        setMyEmployeesSelected({
+                          ...myEmployeeSelected,
+                          status: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-500 rounded-md">
+                        <SelectValue placeholder="Select Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">
+                          {t("virtualOffice.online")}
+                        </SelectItem>
+                        <SelectItem value="away">
+                          {t("virtualOffice.away")}
+                        </SelectItem>
+                        <SelectItem value="busy">
+                          {t("virtualOffice.busy")}
+                        </SelectItem>
+                        <SelectItem value="inMeeting">
+                          {t("virtualOffice.inMeeting")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    className="w-full py-2 bg-gray-800 hover:bg-gray-900 text-white font-medium rounded-md transition-all flex items-center justify-center"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin h-4 w-4 mr-2 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          />
+                        </svg>
+                        {t("virtualOffice.updatingProfile")}
+                      </>
+                    ) : (
+                      `${t("virtualOffice.updateProfile")}`
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
           <TabsContent value="people" className="space-y-6">
             {/* Filter Section */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
                 <Input
-                  placeholder="Search employees..."
+                  placeholder={t("virtualOffice.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-gray-300 focus:border-gray-500"
@@ -398,7 +608,7 @@ export default function VirtualOfficeClient() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All Departments">
-                    All Departments
+                    {t("virtualOffice.allDepartments")}
                   </SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept} value={dept}>
@@ -408,13 +618,14 @@ export default function VirtualOfficeClient() {
                 </SelectContent>
               </Select>
             </div>
+
             {/* Employees Grid */}
             <ScrollArea className="h-[600px] pr-2">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredEmployees.map((employee) => (
                   <Card
                     key={employee.id}
-                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg cursor-pointer"
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg cursor-pointer transition-transform hover:scale-[1.02]"
                     onClick={() =>
                       router.push(`/chat?employeeId=${employee.id}`)
                     }
@@ -439,30 +650,19 @@ export default function VirtualOfficeClient() {
 
                     <CardContent className="pt-0 space-y-2">
                       <div className="flex items-center justify-between">
-                        <Badge
-                          variant={employee.isAI ? "secondary" : "outline"}
-                          className={
-                            employee.isAI
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-gray-100 text-gray-800"
-                          }
-                        >
-                          {employee.isAI ? "AI Assistant" : "Human"}
-                        </Badge>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-200"
                           onClick={(e) => {
-                            e.stopPropagation(); // لمنع تفعيل onClick للكارت عند الضغط على الزر
-                            router.push(`/chat?employeeId=${employee.id}`); // ✅
+                            e.stopPropagation();
+                            router.push(`/chat?employeeId=${employee.id}`);
                           }}
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
                       </div>
 
-                      {/* Full intro text without truncation */}
                       {employee.introduction && (
                         <p className="text-xs text-gray-600 mt-1 break-words">
                           {employee.introduction}
@@ -474,195 +674,21 @@ export default function VirtualOfficeClient() {
               </div>
             </ScrollArea>
           </TabsContent>
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-md rounded-lg">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-gray-800 text-lg font-semibold">
-                      Your Virtual Office Profile
-                    </CardTitle>
-                    <CardDescription className="text-gray-600">
-                      Update your information for the Pixel Virtual Office.
-                    </CardDescription>
-                  </div>
-
-                  {/* Popover for My EVE Employees */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="bg-gradient-to-r from-purple-600 to-purple-800 text-white hover:from-purple-700 hover:to-purple-900"
-                      >
-                        My EVE Employees
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-64 bg-white text-black shadow-lg border border-gray-200 rounded-md">
-                      <h4 className="font-semibold mb-2 text-gray-800">
-                        Employees List
-                      </h4>
-                      <ul className="space-y-1 max-h-60 overflow-y-auto">
-                        {myEmployees?.length === 0 ? (
-                          <p className="text-sm text-gray-500">
-                            No employees found.
-                          </p>
-                        ) : (
-                          myEmployees.map((emp) => (
-                            <li
-                              key={emp.id}
-                              className="border-b pb-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-all"
-                              onClick={() => {
-                                setEveData(emp);
-                                setMyEmployee(emp);
-                                setMessages([]);
-                                toast({
-                                  title: `Now editing ${emp.name}'s profile`,
-                                });
-                              }}
-                            >
-                              <p className="font-medium">{emp.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {emp.department}
-                              </p>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  {/* Name */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="name"
-                      className="text-sm text-gray-700 font-medium"
-                    >
-                      Name
-                    </Label>
-                    <Input
-                      id="name"
-                      required
-                      value={myEmployee?.name || ""}
-                      onChange={(e) =>
-                        setMyEmployee((prev) =>
-                          prev ? { ...prev, name: e.target.value } : prev
-                        )
-                      }
-                      className="border-gray-300 focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
-                      placeholder="Enter employee name"
-                    />
-                  </div>
-
-                  {/* Department */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="department"
-                      className="text-sm text-gray-700 font-medium"
-                    >
-                      Department In Office
-                    </Label>
-                    <Select
-                      value={myEmployee?.department || ""}
-                      onValueChange={(value) =>
-                        myEmployee &&
-                        setMyEmployee({
-                          ...myEmployee,
-                          department: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-400">
-                        <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Role */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="role"
-                      className="text-sm text-gray-700 font-medium"
-                    >
-                      Role
-                    </Label>
-                    <Input
-                      id="role"
-                      required
-                      value={myEmployee?.role || ""}
-                      onChange={(e) =>
-                        myEmployee &&
-                        setMyEmployee({ ...myEmployee, role: e.target.value })
-                      }
-                      className="border-gray-300 focus:ring-2 focus:ring-gray-400"
-                      placeholder="e.g. Developer, Designer"
-                    />
-                  </div>
-
-                  {/* Status */}
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="status"
-                      className="text-sm text-gray-700 font-medium"
-                    >
-                      Status
-                    </Label>
-                    <Select
-                      value={myEmployee?.status || "online"}
-                      onValueChange={(value) =>
-                        myEmployee &&
-                        setMyEmployee({ ...myEmployee, status: value })
-                      }
-                    >
-                      <SelectTrigger className="border-gray-300 focus:ring-2 focus:ring-gray-400">
-                        <SelectValue placeholder="Select Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="away">Away</SelectItem>
-                        <SelectItem value="busy">Busy</SelectItem>
-                        <SelectItem value="inMeeting">In a Meeting</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="w-full py-2 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-medium"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Updating..." : "Update Profile"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="departments" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {departments.map((dept) => {
                 const deptEmployees = employees.filter(
                   (emp) => emp.department === dept
                 );
+
                 return (
                   <Card
                     key={dept}
-                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-300 shadow-sm rounded-lg"
+                    className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-md rounded-xl transition hover:shadow-lg"
                   >
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-semibold text-gray-800">
+                      <CardTitle className="text-lg font-semibold text-gray-800">
                         {dept}
                       </CardTitle>
                       <CardDescription className="text-gray-500 text-sm">
@@ -674,18 +700,19 @@ export default function VirtualOfficeClient() {
                     <CardContent className="pt-0">
                       <div className="flex items-center justify-between">
                         {/* Employee initials */}
-                        <div className="flex -space-x-2">
+                        <div className="flex -space-x-2 overflow-hidden">
                           {deptEmployees.slice(0, 3).map((emp) => (
                             <div
                               key={emp.id}
-                              className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white flex items-center justify-center text-sm font-medium text-white shadow-sm"
+                              className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-2 border-white flex items-center justify-center text-sm font-semibold text-white shadow"
                               title={emp.name}
                             >
                               {emp.name.charAt(0)}
                             </div>
                           ))}
+
                           {deptEmployees.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-sm font-medium text-white shadow-sm">
+                            <div className="w-9 h-9 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-sm font-semibold text-white shadow">
                               +{deptEmployees.length - 3}
                             </div>
                           )}
@@ -695,13 +722,13 @@ export default function VirtualOfficeClient() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition"
+                          className="text-sm text-gray-700 hover:text-white hover:bg-gradient-to-r from-gray-700 to-gray-900 px-3 py-1 rounded transition-all"
                           onClick={() => {
                             setSelectedDepartment(dept);
                             setActiveTab("people");
                           }}
                         >
-                          View
+                          {t("virtualOffice.view")}
                         </Button>
                       </div>
                     </CardContent>

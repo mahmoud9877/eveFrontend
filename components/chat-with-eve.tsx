@@ -1,5 +1,6 @@
 "use client";
-import { ChevronDown } from "lucide-react"; // تأكد إنك مستورد الأيقونة
+
+import { ChevronDown, ArrowLeft, Send, Users, Paperclip } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -15,7 +16,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { ArrowLeft, Send, Users, Paperclip } from "lucide-react";
 
 interface Message {
   id: string;
@@ -46,6 +46,7 @@ const ChatWithEve: React.FC = () => {
   const [isFromOffice, setIsFromOffice] = useState(false);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const employeeCache = useRef<EveData[] | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -58,6 +59,11 @@ const ChatWithEve: React.FC = () => {
       return;
     }
     const loadEmployees = async () => {
+      if (employeeCache.current) {
+        setMyEmployees(employeeCache.current);
+        return;
+      }
+
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee/my-employee`,
@@ -69,12 +75,20 @@ const ChatWithEve: React.FC = () => {
           }
         );
         const data = await res.json();
-        setMyEmployees(data.employees || []);
+        const { employees } = data;
+        const withFullImagePaths = employees.map((emp: EveData) => ({
+          ...emp,
+          photoUrl: emp.photoUrl
+            ? `https://eve-backend.vercel.app/${emp.photoUrl}`
+            : undefined,
+        }));
+
+        setMyEmployees(withFullImagePaths);
+        employeeCache.current = withFullImagePaths;
       } catch (error) {
         console.error("Error loading employees:", error);
       }
     };
-
     loadEmployees();
   }, []);
 
@@ -112,19 +126,26 @@ const ChatWithEve: React.FC = () => {
       content: file ? "Sent a file" : input,
       timestamp,
       type: file ? "file" : "text",
-      ...(file && { fileUrl: URL.createObjectURL(file), fileName: file.name }),
+      ...(file && {
+        fileUrl: URL.createObjectURL(file),
+        fileName: file.name,
+      }),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // حذف الرسالة المؤقتة
+    setMessages((prev) => [
+      ...prev.filter((msg) => msg.id !== "temp-file"),
+      userMessage,
+    ]);
     setInput("");
     setIsLoading(true);
+
     try {
       const formData = new FormData();
       if (file) formData.append("file", file);
       formData.append("message", input);
       formData.append("employeeId", eveData.id);
-
-      const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
         method: "POST",
         headers: {
           authorization: `employee${localStorage.getItem("token")}`,
@@ -132,20 +153,11 @@ const ChatWithEve: React.FC = () => {
         body: formData,
       });
 
-      if (!data) {
-        toast({
-          title: "Error",
-          description: "No response from EVE.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const res = await data.json();
+      const data = await res.json();
       const eveResponse: Message = {
         id: (Date.now() + 1).toString(),
         sender: "eve",
-        content: res.reply,
+        content: data.reply,
         timestamp: new Date(),
         type: "text",
       };
@@ -165,42 +177,42 @@ const ChatWithEve: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 dark:from-gray-900 dark:to-gray-800">
-      <div className="bg-black/30 backdrop-blur-sm p-4 border-b border-white/10">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 text-white font-sans">
+      {/* Header */}
+      <div className="bg-white/5 backdrop-blur-md p-4 border-b border-white/10 shadow-sm">
         <div className="container mx-auto flex items-center justify-between overflow-x-auto">
           <Button
             variant="ghost"
-            className="text-white hover:text-white/80 hover:bg-white/10"
+            className="text-white hover:text-white/80 hover:bg-white/10 transition"
             onClick={() =>
               router.push(isFromOffice ? "/virtual-office" : "/home")
             }
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+
           <div className="flex items-center gap-4 min-w-0">
             <Avatar className="h-10 w-10 shrink-0">
               {eveData?.photoUrl ? (
                 <AvatarImage src={eveData.photoUrl} alt="employee avatar" />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white">
+                <AvatarFallback className="bg-indigo-600 text-white">
                   {eveData?.name?.charAt(0) || "E"}
                 </AvatarFallback>
               )}
             </Avatar>
-
             <div className="truncate">
-              <h2 className="text-lg font-semibold text-white truncate">
+              <h2 className="text-lg font-semibold truncate text-white">
                 {eveData?.name || "EVE"}
               </h2>
               <div className="flex items-center gap-2">
-                <p className="text-sm text-blue-200 truncate">
+                <p className="text-sm text-indigo-200 truncate">
                   {eveData?.department || "AI Assistant"}
                 </p>
-
                 {eveData?.status && (
                   <Badge
                     variant="outline"
-                    className="text-xs whitespace-nowrap"
+                    className="text-xs border-indigo-400 text-indigo-100"
                   >
                     {eveData.status}
                   </Badge>
@@ -208,7 +220,8 @@ const ChatWithEve: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 shrink-0">
+
+          <div className="flex items-center gap-3 shrink-0">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -245,7 +258,6 @@ const ChatWithEve: React.FC = () => {
                 </ul>
               </PopoverContent>
             </Popover>
-
             {isFromOffice && (
               <Button
                 variant="outline"
@@ -260,6 +272,7 @@ const ChatWithEve: React.FC = () => {
         </div>
       </div>
 
+      {/* Chat Area */}
       <ScrollArea className="flex-1 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.map((msg) => (
@@ -270,10 +283,10 @@ const ChatWithEve: React.FC = () => {
               }`}
             >
               <Card
-                className={`max-w-md rounded-2xl px-3 py-2 ${
+                className={`max-w-md rounded-2xl px-4 py-3 text-white shadow-md ${
                   msg.sender === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white/10 text-white backdrop-blur"
+                    ? "bg-gradient-to-r from-indigo-700 to-purple-700"
+                    : "bg-white/10 backdrop-blur border border-white/10"
                 }`}
               >
                 <CardContent className="p-0">
@@ -290,9 +303,9 @@ const ChatWithEve: React.FC = () => {
                       </a>
                     </div>
                   ) : (
-                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-sm leading-relaxed">{msg.content}</p>
                   )}
-                  <p className="text-xs opacity-70 mt-1">
+                  <p className="text-xs opacity-60 mt-1 text-right">
                     {format(new Date(msg.timestamp), "MMM dd, yyyy hh:mm a")}
                   </p>
                 </CardContent>
@@ -302,50 +315,86 @@ const ChatWithEve: React.FC = () => {
         </div>
       </ScrollArea>
 
-      <div className="bg-black/30 backdrop-blur-sm p-4 border-t border-white/10">
-        <div className="container mx-auto max-w-4xl flex gap-2">
-          <Input
-            type="text"
-            placeholder={
-              eveData?.name
-                ? `Message ${eveData.name}...`
-                : "Select an employee first..."
-            }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={!eveData?.id}
-            className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:ring-white focus:border-white"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            onChange={(e) => {
-              const selected = e.target.files?.[0];
-              if (selected) {
-                setFile(selected);
-                toast({
-                  title: "File selected",
-                  description: selected.name,
-                });
+      {/* Input + File Preview + Send */}
+      <div className="bg-white/5 backdrop-blur-md p-4 border-t border-white/10">
+        <div className="container mx-auto max-w-4xl flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder={
+                eveData?.name
+                  ? `Message ${eveData.name}...`
+                  : "Select an employee first..."
               }
-            }}
-            hidden
-          />
-          <Button
-            variant="ghost"
-            className="text-white"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Paperclip />
-          </Button>
-          <Button
-            onClick={handleSendMessage}
-            disabled={(!input.trim() && !file) || isLoading || !eveData?.id}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={!eveData?.id}
+              className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50 focus:ring-white focus:border-white px-4 py-2 rounded-xl"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={(e) => {
+                const selected = e.target.files?.[0];
+                if (selected) {
+                  setFile(selected);
+                  const timestamp = new Date();
+                  const tempFileMessage: Message = {
+                    id: "temp-file",
+                    sender: "user",
+                    content: "Sent a file",
+                    timestamp,
+                    type: "file",
+                    fileUrl: URL.createObjectURL(selected),
+                    fileName: selected.name,
+                  };
+
+                  setMessages((prev) => [...prev, tempFileMessage]);
+
+                  toast({
+                    title: "File selected",
+                    description: selected.name,
+                  });
+                }
+              }}
+              hidden
+            />
+            <Button
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip />
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={(!input.trim() && !file) || isLoading || !eveData?.id}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-xl"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* File Preview with Remove */}
+          {file && (
+            <div className="text-sm text-white bg-white/10 p-2 rounded-md flex items-center justify-between mt-1">
+              <span className="truncate max-w-[80%]">{file.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-400 ml-2 hover:text-red-600"
+                onClick={() => {
+                  setFile(null);
+                  setMessages((prev) =>
+                    prev.filter((msg) => msg.id !== "temp-file")
+                  );
+                }}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

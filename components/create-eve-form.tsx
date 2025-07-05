@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Card,
   CardContent,
@@ -22,51 +23,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Upload } from "lucide-react";
-import * as z from "zod";
+import { ArrowLeft, Globe, LogOut, Upload } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  department: z.string().min(2, {
-    message: "Department must be selected.",
-  }),
-  introduction: z.string().min(10, {
-    message: "Introduction must be at least 10 characters.",
-  }),
-});
-
-const departments = [
+export const departments = [
   "CF PS HR MFG & Purchases",
   "CF PS MFG EGYPT",
+  "Engineering",
   "F&A",
   "FPWH",
+  "General Employee",
   "General Operations",
   "GMDSO",
   "HR",
   "HS&E",
+  "Human Resources",
   "IWS",
   "Line-1",
   "Line-10",
   "Line-2",
   "Line-9",
-  "P&E CFS ENG",
+  "Marketing",
   "P&E Cairo/Karachi",
+  "P&E CFS ENG",
   "PFSS",
   "QA",
   "Regional GMDSO",
   "Regional Tech Pack",
-  "Engineering",
-  "Marketing",
-  "Sales",
-  "Human Resources",
-  "General Employee",
   "RPM WH",
+  "Sales",
   "Shave Care Operations",
   "Shave Care Qualilty",
   "Storeroom",
@@ -74,18 +61,27 @@ const departments = [
   "TSM",
   "Utilities",
 ];
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  department: z.string().min(2, { message: "Department must be selected." }),
+  introduction: z
+    .string()
+    .min(10, { message: "Introduction must be at least 10 characters." }),
+});
 
 const CreateEveForm = () => {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const {
     register,
-    handleSubmit,
     control,
+    handleSubmit,
     formState: { errors },
   } = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -96,40 +92,28 @@ const CreateEveForm = () => {
     },
   });
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const localUrl = URL.createObjectURL(file);
-    setPhotoUrl(localUrl);
-  };
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      const fullData = {
-        ...data,
-        department: data.department,
-        photoUrl,
-      };
-      console.log("📤 Sending data to backend:", fullData);
-      localStorage.setItem("eveEmployee", JSON.stringify(fullData));
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("department", data.department);
+      formData.append("introduction", data.introduction);
+      if (photoFile) formData.append("photoUrl", photoFile);
 
       const token = localStorage.getItem("token");
-
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/eve-employee`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             authorization: `employee${token}`,
           },
-          body: JSON.stringify(fullData),
+          body: formData,
         }
       );
 
       const result = await response.json();
-
       if (!response.ok || result.error) {
         throw new Error(result?.error || "Failed to create employee.");
       }
@@ -139,6 +123,7 @@ const CreateEveForm = () => {
         description: "Eve Employee created successfully!",
       });
 
+      localStorage.removeItem("allEmployees");
       router.push("/chat-with-eve");
     } catch (error: any) {
       toast({
@@ -152,36 +137,89 @@ const CreateEveForm = () => {
     }
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload a valid image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoUrl(URL.createObjectURL(file));
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    localStorage.removeItem("eveCheckedOnce");
+    router.push("/");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 dark">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 py-12 px-4">
+      {/* Header Buttons */}
+      <div className="flex justify-end items-center gap-3 px-4 py-2">
+        <Button
+          variant="outline"
+          onClick={toggleLanguage}
+          className="text-sm text-indigo-200 border-indigo-500"
+        >
+          <Globe className="h-4 w-4 mr-2" />
+          {i18n.language === "en" ? "عربي" : "English"}
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={handleLogout}
+          className="text-sm text-red-300 border-red-500"
+          disabled={isLoggingOut}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </Button>
+      </div>
+
+      {/* Back Button + Form */}
       <div className="container mx-auto max-w-3xl">
         <Button
           variant="ghost"
-          className="mb-6 text-white hover:text-white/80 hover:bg-white/10"
           onClick={() => router.push("/home")}
+          className="mb-6 text-white hover:bg-white/10"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("common.back")}
+          Back
         </Button>
 
-        <Card className="bg-white/10 backdrop-blur-md border-none text-white">
+        <Card className="bg-white/10 text-white border-none backdrop-blur-md">
           <CardHeader>
-            <CardTitle className="text-2xl">{t("createEve.title")}</CardTitle>
+            <CardTitle>Create Eve</CardTitle>
             <CardDescription className="text-blue-200">
-              {t("createEve.description")}
+              Fill out the form to create a virtual assistant.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col md:flex-row gap-6">
+                {/* Form Fields */}
                 <div className="flex-1 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t("createEve.name")}</Label>
+                  <div>
+                    <Label htmlFor="name">Name</Label>
                     <Input
                       id="name"
                       {...register("name")}
-                      placeholder={t("createEve.namePlaceholder")}
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/50"
+                      placeholder="Enter employee name"
+                      className="bg-white/20 border-white/30 text-white"
                     />
                     {errors.name && (
                       <p className="text-red-400 text-sm">
@@ -190,22 +228,18 @@ const CreateEveForm = () => {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="department">
-                      {t("createEve.department")}
-                    </Label>
+                  <div>
+                    <Label htmlFor="department">Department</Label>
                     <Controller
-                      control={control}
                       name="department"
+                      control={control}
                       render={({ field }) => (
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                            <SelectValue
-                              placeholder={t("createEve.departmentPlaceholder")}
-                            />
+                            <SelectValue placeholder="Select department" />
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
@@ -225,42 +259,62 @@ const CreateEveForm = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <div className="w-40 h-40 rounded-full overflow-hidden bg-white/20 mb-4 relative">
+                {/* Image Upload */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-40 h-40 rounded-full overflow-hidden bg-white/20">
                     <Image
                       src={photoUrl || "/placeholder.svg"}
-                      alt="EVE Avatar"
-                      fill
-                      className="object-cover"
+                      alt="Employee"
+                      width={160}
+                      height={160}
+                      className="object-cover w-full h-full"
+                      priority
                     />
                   </div>
                   <Label
                     htmlFor="photo"
-                    className="cursor-pointer bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-md flex items-center"
+                    className="bg-white/20 text-white px-4 py-2 rounded-md cursor-pointer flex items-center hover:bg-white/30"
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    {t("createEve.uploadPhoto")}
+                    Upload Photo
                   </Label>
                   <Input
                     id="photo"
                     type="file"
                     accept="image/*"
-                    className="hidden"
                     onChange={handlePhotoUpload}
+                    className="hidden"
                   />
+                  {photoUrl && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPhotoUrl("");
+                        setPhotoFile(null);
+                      }}
+                      className="text-red-400 hover:text-red-600"
+                    >
+                      Remove Photo
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="introduction">
-                  {t("createEve.introduction")}
-                </Label>
-                <Textarea
-                  id="introduction"
-                  {...register("introduction")}
-                  placeholder={t("createEve.introductionPlaceholder")}
-                  rows={5}
-                  className="bg-white/20 border-white/30 text-white placeholder:text-white/50"
+              <div>
+                <Label htmlFor="introduction">Introduction</Label>
+                <Controller
+                  name="introduction"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      {...field}
+                      id="introduction"
+                      placeholder="Write a short intro about this assistant"
+                      rows={5}
+                      className="bg-white/20 border-white/30 text-white"
+                    />
+                  )}
                 />
                 {errors.introduction && (
                   <p className="text-red-400 text-sm">
@@ -274,7 +328,7 @@ const CreateEveForm = () => {
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? t("common.submitting") : t("createEve.submit")}
+                {isSubmitting ? "Submitting..." : "Create Eve"}
               </Button>
             </form>
           </CardContent>

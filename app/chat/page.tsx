@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
 
 interface Message {
@@ -39,6 +39,7 @@ const ChatContent = () => {
   const [eveData, setEveData] = useState<EveData | null>(null);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
   const employeeIdFromUrl = searchParams.get("employeeId");
 
@@ -95,6 +96,7 @@ const ChatContent = () => {
 
         setEveData({
           id: employeeIdFromUrl || "",
+          photoUrl: "",
           name: "Unknown Employee",
           department: "N/A",
           introduction: "",
@@ -106,6 +108,10 @@ const ChatContent = () => {
     fetchEmployeeData();
   }, [employeeIdFromUrl]);
 
+  useEffect(() => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -116,10 +122,7 @@ const ChatContent = () => {
   const handleSendMessage = async () => {
     if (!input.trim() && !file) return;
     if (!eveData?.id) {
-      toast({
-        title: "Select an employee first",
-        variant: "destructive",
-      });
+      toast({ title: "Select an employee first", variant: "destructive" });
       return;
     }
 
@@ -136,7 +139,6 @@ const ChatContent = () => {
       }),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
@@ -145,6 +147,7 @@ const ChatContent = () => {
       if (file) formData.append("file", file);
       formData.append("message", input);
       formData.append("employeeId", eveData.id);
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
         method: "POST",
         headers: {
@@ -154,6 +157,8 @@ const ChatContent = () => {
       });
 
       const responseData = await res.json();
+
+      setMessages((prev) => [...prev, userMessage]);
 
       const eveResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -178,7 +183,7 @@ const ChatContent = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 text-white font-sans">
       <div className="bg-black/30 backdrop-blur-sm p-4 border-b border-white/10">
         <div className="container mx-auto flex items-center justify-between">
           <Button
@@ -186,14 +191,18 @@ const ChatContent = () => {
             className="text-white hover:text-white/80 hover:bg-white/10"
             onClick={() => router.push("/home")}
           >
-            <ArrowLeft className="h-5 w-5" />
+            {" "}
+            <ArrowLeft className="h-5 w-5" />{" "}
           </Button>
           <div className="flex items-center gap-4 min-w-0">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 border border-white shadow-sm">
               {eveData?.photoUrl ? (
-                <AvatarImage src={eveData.photoUrl} alt="employee avatar" />
+                <AvatarImage
+                  src={`http://localhost:5000${eveData.photoUrl}`}
+                  alt="employee avatar"
+                />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white">
+                <AvatarFallback className="bg-blue-500 text-white text-lg">
                   {eveData?.name?.charAt(0) || "E"}
                 </AvatarFallback>
               )}
@@ -260,48 +269,61 @@ const ChatContent = () => {
               </Card>
             </div>
           ))}
+          <div ref={endOfMessagesRef} />
         </div>
       </ScrollArea>
 
       <div className="bg-black/30 backdrop-blur-sm p-4 border-t border-white/10">
-        <div className="container mx-auto max-w-4xl flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder={`Message ${eveData?.name || "EVE"}...`}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1 bg-white/10 border border-white/30 text-white placeholder:text-white/50"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={(e) => {
-              const selected = e.target.files?.[0];
-              if (selected) {
-                setFile(selected);
-                toast({
-                  title: "File selected",
-                  description: selected.name,
-                });
-              }
-            }}
-          />
-          <Button
-            variant="ghost"
-            className="text-white hover:bg-white/10"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <Button
-            onClick={handleSendMessage}
-            disabled={(!input.trim() && !file) || isLoading}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="container mx-auto max-w-4xl flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder={`Message ${eveData?.name || "EVE"}...`}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="flex-1 bg-white/10 border border-white/30 text-white placeholder:text-white/50"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              onChange={(e) => {
+                const selected = e.target.files?.[0];
+                if (selected) {
+                  setFile(selected);
+                  toast({ title: "File selected", description: selected.name });
+                }
+              }}
+            />
+            <Button
+              variant="ghost"
+              className="text-white hover:bg-white/10"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="h-5 w-5" />
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={(!input.trim() && !file) || isLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          {file && (
+            <div className="text-sm text-white bg-white/10 p-2 rounded-md flex items-center justify-between mt-2">
+              <span className="truncate max-w-[80%]">{file.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-400 ml-2 hover:text-red-600"
+                onClick={() => setFile(null)}
+              >
+                Remove
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

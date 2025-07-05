@@ -77,13 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) return false;
       const responseData = await response.json();
-      console.log(responseData);
       const user = responseData.user;
       const token = responseData.token;
       setUser(user);
       localStorage.setItem("eve-user", JSON.stringify(user));
       localStorage.setItem("token", token);
-
       return true;
     } catch (error) {
       console.error("Login error:", error);
