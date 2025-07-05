@@ -198,26 +198,26 @@ const CreateEveForm = () => {
           className="mb-6 text-white hover:bg-white/10"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          {t("common.back")}
         </Button>
-
         <Card className="bg-white/10 text-white border-none backdrop-blur-md">
           <CardHeader>
-            <CardTitle>Create Eve</CardTitle>
+            <CardTitle>{t("createEve.title")}</CardTitle>
             <CardDescription className="text-blue-200">
-              Fill out the form to create a virtual assistant.
+              {t("createEve.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1 space-y-4">
+                  {/* Name */}
                   <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">{t("createEve.name")}</Label>
                     <Input
                       id="name"
                       {...register("name")}
-                      placeholder="Enter employee name"
+                      placeholder={t("createEve.namePlaceholder")}
                       className="bg-white/20 border-white/30 text-white"
                     />
                     {errors.name && (
@@ -227,8 +227,11 @@ const CreateEveForm = () => {
                     )}
                   </div>
 
+                  {/* Department */}
                   <div>
-                    <Label htmlFor="department">Department</Label>
+                    <Label htmlFor="department">
+                      {t("createEve.department")}
+                    </Label>
                     <Controller
                       name="department"
                       control={control}
@@ -238,7 +241,9 @@ const CreateEveForm = () => {
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                            <SelectValue placeholder="Select department" />
+                            <SelectValue
+                              placeholder={t("createEve.departmentPlaceholder")}
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
@@ -258,6 +263,7 @@ const CreateEveForm = () => {
                   </div>
                 </div>
 
+                {/* Photo Upload */}
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-40 h-40 rounded-full overflow-hidden bg-white/20">
                     <Image
@@ -274,7 +280,7 @@ const CreateEveForm = () => {
                     className="bg-white/20 text-white px-4 py-2 rounded-md cursor-pointer flex items-center hover:bg-white/30"
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Photo
+                    {t("createEve.uploadPhoto")}
                   </Label>
                   <Input
                     id="photo"
@@ -293,14 +299,17 @@ const CreateEveForm = () => {
                       }}
                       className="text-red-400 hover:text-red-600"
                     >
-                      Remove Photo
+                      {t("common.removePhoto") || "Remove Photo"}
                     </Button>
                   )}
                 </div>
               </div>
 
+              {/* Introduction */}
               <div>
-                <Label htmlFor="introduction">Introduction</Label>
+                <Label htmlFor="introduction">
+                  {t("createEve.introduction")}
+                </Label>
                 <Controller
                   name="introduction"
                   control={control}
@@ -308,7 +317,7 @@ const CreateEveForm = () => {
                     <Textarea
                       {...field}
                       id="introduction"
-                      placeholder="Write a short intro about this assistant"
+                      placeholder={t("createEve.introductionPlaceholder")}
                       rows={5}
                       className="bg-white/20 border-white/30 text-white"
                     />
@@ -321,12 +330,15 @@ const CreateEveForm = () => {
                 )}
               </div>
 
+              {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Create Eve"}
+                {isSubmitting
+                  ? t("common.submitting") || "Submitting..."
+                  : t("createEve.submit")}
               </Button>
             </form>
           </CardContent>

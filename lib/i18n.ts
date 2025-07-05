@@ -183,6 +183,7 @@ i18n.use(initReactI18next).init({
           namePlaceholder: "أدخل اسمًا لـ EVE الخاص بك",
           department: "القسم",
           introduction: "المقدمة",
+          departmentPlaceholder: "اختر قسما",
           introductionPlaceholder: "اكتب مقدمة لموظف EVE الخاص بك...",
           uploadPhoto: "تحميل صورة",
           submit: "إنشاء EVE",
