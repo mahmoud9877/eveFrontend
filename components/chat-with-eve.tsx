@@ -152,9 +152,9 @@ const ChatWithEve: React.FC = () => {
         },
         body: formData,
       });
-     
 
       const data = await res.json();
+      console.log("add", data);
       const eveResponse: Message = {
         id: (Date.now() + 1).toString(),
         sender: "eve",
