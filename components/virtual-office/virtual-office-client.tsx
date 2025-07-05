@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { departments } from "../create-eve-form";
 import {
   Popover,
   PopoverContent,
@@ -60,6 +59,39 @@ type EveEmployee = {
   introduction?: string;
   role?: string;
 };
+export const departments = [
+  "CF PS HR MFG & Purchases",
+  "CF PS MFG EGYPT",
+  "Engineering",
+  "F&A",
+  "FPWH",
+  "General Employee",
+  "General Operations",
+  "GMDSO",
+  "HR",
+  "HS&E",
+  "Human Resources",
+  "IWS",
+  "Line-1",
+  "Line-10",
+  "Line-2",
+  "Line-9",
+  "Marketing",
+  "P&E Cairo/Karachi",
+  "P&E CFS ENG",
+  "PFSS",
+  "QA",
+  "Regional GMDSO",
+  "Regional Tech Pack",
+  "RPM WH",
+  "Sales",
+  "Shave Care Operations",
+  "Shave Care Qualilty",
+  "Storeroom",
+  "TSG Matrix",
+  "TSM",
+  "Utilities",
+];
 
 export default function VirtualOfficeClient() {
   const { user } = useAuth();

@@ -61,6 +61,7 @@ export const departments = [
   "TSM",
   "Utilities",
 ];
+
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   department: z.string().min(2, { message: "Department must be selected." }),
@@ -91,6 +92,35 @@ const CreateEveForm = () => {
       introduction: "",
     },
   });
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload a valid image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoUrl(URL.createObjectURL(file));
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "ar" : "en";
+    i18n.changeLanguage(newLang);
+    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    localStorage.removeItem("eveCheckedOnce");
+    router.push("/");
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
@@ -124,6 +154,7 @@ const CreateEveForm = () => {
       });
 
       localStorage.removeItem("allEmployees");
+      localStorage.removeItem("myEmployees");
       router.push("/chat-with-eve");
     } catch (error: any) {
       toast({
@@ -137,38 +168,8 @@ const CreateEveForm = () => {
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please upload a valid image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setPhotoFile(file);
-    setPhotoUrl(URL.createObjectURL(file));
-  };
-
-  const toggleLanguage = () => {
-    const newLang = i18n.language === "en" ? "ar" : "en";
-    i18n.changeLanguage(newLang);
-    document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
-  };
-
-  const handleLogout = () => {
-    setIsLoggingOut(true);
-    localStorage.removeItem("eveCheckedOnce");
-    router.push("/");
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 py-12 px-4">
-      {/* Header Buttons */}
       <div className="flex justify-end items-center gap-3 px-4 py-2">
         <Button
           variant="outline"
@@ -190,7 +191,6 @@ const CreateEveForm = () => {
         </Button>
       </div>
 
-      {/* Back Button + Form */}
       <div className="container mx-auto max-w-3xl">
         <Button
           variant="ghost"
@@ -211,7 +211,6 @@ const CreateEveForm = () => {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col md:flex-row gap-6">
-                {/* Form Fields */}
                 <div className="flex-1 space-y-4">
                   <div>
                     <Label htmlFor="name">Name</Label>
@@ -259,7 +258,6 @@ const CreateEveForm = () => {
                   </div>
                 </div>
 
-                {/* Image Upload */}
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-40 h-40 rounded-full overflow-hidden bg-white/20">
                     <Image
