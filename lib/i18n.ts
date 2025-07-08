@@ -103,7 +103,7 @@ i18n.use(initReactI18next).init({
           profile: "Profile",
           playNav:
             "Play inside the designed virtual office environment with pixel art. Press the blue boxes to interact with different regions, or press the employee images to start conversations.",
-          pixelArt: "Pixel Art Virtual Office Environment",
+          pixelArt: "Virtual Office Environment",
           departments: "Departments",
           selectEmployee: "Select Employee",
           searchPlaceholder: "Search for employees",
@@ -232,7 +232,7 @@ i18n.use(initReactI18next).init({
           exampleRole: "مثال: مدير",
           departmentPlaceholder: "حدد قسمًا",
           teamStatus: "حالة الفريق",
-          pixelArt: "بيئة مكتب افتراضية بأسلوب البيكسل آرت",
+          pixelArt: "بيئه مكتب افتراضية",
           departments: "الأقسام",
           allDepartments: "جميع الأقسام",
           active: "نشط",

@@ -45,8 +45,11 @@ const ChatWithEve: React.FC = () => {
   const [myEmployees, setMyEmployees] = useState<EveData[]>([]);
   const [isFromOffice, setIsFromOffice] = useState(false);
   const router = useRouter();
+  const [eveIsTyping, setEveIsTyping] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const employeeCache = useRef<EveData[] | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -79,7 +82,7 @@ const ChatWithEve: React.FC = () => {
         const withFullImagePaths = employees.map((emp: EveData) => ({
           ...emp,
           photoUrl: emp.photoUrl
-            ? `https://eve-backend.vercel.app/${emp.photoUrl}`
+            ? `${process.env.NEXT_PUBLIC_BASE_URL}${emp.photoUrl}`
             : undefined,
         }));
 
@@ -101,7 +104,12 @@ const ChatWithEve: React.FC = () => {
     }
   }, [messages, eveData?.id]);
 
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -109,6 +117,9 @@ const ChatWithEve: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
+    setEveIsTyping(true);
+    await new Promise((res) => setTimeout(res, 500));
+
     if (!eveData?.id) {
       toast({
         title: "Please select an employee",
@@ -117,34 +128,39 @@ const ChatWithEve: React.FC = () => {
       });
       return;
     }
+
     if (!input.trim() && !file) return;
 
+    const localInput = input.trim();
+    const localFile = file;
+
     const timestamp = new Date();
+    const fileText = localFile ? `📎 ${localFile.name}` : "";
+    const combinedContent = [localInput, fileText].filter(Boolean).join(" - ");
+
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
-      content: file ? "Sent a file" : input,
+      content: combinedContent || "Sent a file",
       timestamp,
-      type: file ? "file" : "text",
-      ...(file && {
-        fileUrl: URL.createObjectURL(file),
-        fileName: file.name,
+      type: localFile ? "file" : "text",
+      ...(localFile && {
+        fileUrl: URL.createObjectURL(localFile),
+        fileName: localFile.name,
       }),
     };
 
-    // حذف الرسالة المؤقتة
-    setMessages((prev) => [
-      ...prev.filter((msg) => msg.id !== "temp-file"),
-      userMessage,
-    ]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setFile(null);
     setIsLoading(true);
 
     try {
       const formData = new FormData();
-      if (file) formData.append("file", file);
-      formData.append("message", input);
+      if (localFile) formData.append("file", localFile);
+      formData.append("message", localInput);
       formData.append("employeeId", eveData.id);
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
         method: "POST",
         headers: {
@@ -154,7 +170,6 @@ const ChatWithEve: React.FC = () => {
       });
 
       const data = await res.json();
-      console.log("add", data);
       const eveResponse: Message = {
         id: (Date.now() + 1).toString(),
         sender: "eve",
@@ -173,13 +188,16 @@ const ChatWithEve: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
-      setFile(null);
+      setEveIsTyping(false);
+      if (localFile) {
+        URL.revokeObjectURL(userMessage.fileUrl!);
+      }
     }
   };
 
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-800 text-white font-sans">
-      {/* Header */}
       <div className="bg-white/5 backdrop-blur-md p-4 border-b border-white/10 shadow-sm">
         <div className="container mx-auto flex items-center justify-between overflow-x-auto">
           <Button
@@ -273,39 +291,41 @@ const ChatWithEve: React.FC = () => {
         </div>
       </div>
 
-      {/* Chat Area */}
       <ScrollArea className="flex-1 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <Card
-                className={`max-w-md rounded-2xl px-4 py-3 text-white shadow-md ${
-                  msg.sender === "user"
-                    ? "bg-gradient-to-r from-indigo-700 to-purple-700"
-                    : "bg-white/10 backdrop-blur border border-white/10"
-                }`}
+                className={`max-w-md rounded-2xl px-4 py-3 text-white shadow-md ${msg.sender === "user"
+                  ? "bg-gradient-to-r from-indigo-700 to-purple-700"
+                  : "bg-white/10 backdrop-blur border border-white/10"
+                  }`}
               >
                 <CardContent className="p-0">
                   {msg.type === "file" ? (
-                    <div>
-                      <p className="text-sm font-semibold">File:</p>
-                      <a
-                        href={msg.fileUrl}
-                        download={msg.fileName}
-                        target="_blank"
-                        className="underline text-sm"
-                      >
-                        {msg.fileName}
-                      </a>
+                    <div className="space-y-1">
+                      {msg.content && (
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold">File:</p>
+                        <a
+                          href={msg.fileUrl}
+                          download={msg.fileName}
+                          target="_blank"
+                          className="underline text-sm"
+                        >
+                          {msg.fileName}
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                   )}
+
                   <p className="text-xs opacity-60 mt-1 text-right">
                     {format(new Date(msg.timestamp), "MMM dd, yyyy hh:mm a")}
                   </p>
@@ -313,10 +333,22 @@ const ChatWithEve: React.FC = () => {
               </Card>
             </div>
           ))}
+
+          {/* 👇 حط EVE is typing هنا بعد الرسائل */}
+          {eveIsTyping && (
+            <div className="flex justify-start">
+              <Card className="max-w-xs rounded-2xl px-4 py-3 text-white bg-white/10 backdrop-blur border border-white/10 shadow-md animate-pulse">
+                <CardContent className="p-0">
+                  <p className="text-sm italic">{eveData?.name  } is typing...</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div ref={scrollRef} />
         </div>
       </ScrollArea>
 
-      {/* Input + File Preview + Send */}
       <div className="bg-white/5 backdrop-blur-md p-4 border-t border-white/10">
         <div className="container mx-auto max-w-4xl flex flex-col gap-2">
           <div className="flex gap-2">
@@ -340,25 +372,13 @@ const ChatWithEve: React.FC = () => {
                 const selected = e.target.files?.[0];
                 if (selected) {
                   setFile(selected);
-                  const timestamp = new Date();
-                  const tempFileMessage: Message = {
-                    id: "temp-file",
-                    sender: "user",
-                    content: "Sent a file",
-                    timestamp,
-                    type: "file",
-                    fileUrl: URL.createObjectURL(selected),
-                    fileName: selected.name,
-                  };
-
-                  setMessages((prev) => [...prev, tempFileMessage]);
-
                   toast({
                     title: "File selected",
                     description: selected.name,
                   });
                 }
               }}
+
               hidden
             />
             <Button
@@ -376,8 +396,6 @@ const ChatWithEve: React.FC = () => {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-
-          {/* File Preview with Remove */}
           {file && (
             <div className="text-sm text-white bg-white/10 p-2 rounded-md flex items-center justify-between mt-1">
               <span className="truncate max-w-[80%]">{file.name}</span>
@@ -385,12 +403,7 @@ const ChatWithEve: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 className="text-red-400 ml-2 hover:text-red-600"
-                onClick={() => {
-                  setFile(null);
-                  setMessages((prev) =>
-                    prev.filter((msg) => msg.id !== "temp-file")
-                  );
-                }}
+                onClick={() => setFile(null)}
               >
                 Remove
               </Button>

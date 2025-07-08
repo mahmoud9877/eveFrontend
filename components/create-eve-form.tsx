@@ -299,7 +299,7 @@ const CreateEveForm = () => {
                       }}
                       className="text-red-400 hover:text-red-600"
                     >
-                      {t("common.removePhoto") || "Remove Photo"}
+                      {t("common.delete") || "Remove Photo"}
                     </Button>
                   )}
                 </div>

@@ -173,6 +173,7 @@ export default function VirtualOfficeClient() {
         }
       );
       const json = await res.json();
+      console.log(json)
       if (json && json.employees) {
         setEmployees(json.employees);
         localStorage.setItem("allEmployees", JSON.stringify(json.employees));

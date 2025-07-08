@@ -38,6 +38,8 @@ const ChatContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [eveData, setEveData] = useState<EveData | null>(null);
   const router = useRouter();
+  const [isTyping, setIsTyping] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const endOfMessagesRef = useRef<HTMLDivElement | null>(null);
   const searchParams = useSearchParams();
@@ -120,6 +122,8 @@ const ChatContent = () => {
   };
 
   const handleSendMessage = async () => {
+    setIsTyping(true);
+
     if (!input.trim() && !file) return;
     if (!eveData?.id) {
       toast({ title: "Select an employee first", variant: "destructive" });
@@ -177,6 +181,7 @@ const ChatContent = () => {
         variant: "destructive",
       });
     } finally {
+      setIsTyping(false);
       setIsLoading(false);
       setFile(null);
     }
@@ -198,7 +203,7 @@ const ChatContent = () => {
             <Avatar className="h-10 w-10 border border-white shadow-sm">
               {eveData?.photoUrl ? (
                 <AvatarImage
-                  src={`http://localhost:5000${eveData.photoUrl}`}
+                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${eveData.photoUrl}`}
                   alt="employee avatar"
                 />
               ) : (
@@ -207,6 +212,7 @@ const ChatContent = () => {
                 </AvatarFallback>
               )}
             </Avatar>
+
             <div className="truncate">
               <h2 className="text-lg font-semibold text-white truncate">
                 {eveData?.name || "EVE"}
@@ -235,16 +241,14 @@ const ChatContent = () => {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"
+                }`}
             >
               <Card
-                className={`max-w-md rounded-2xl px-3 py-2 shadow-md ${
-                  msg.sender === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white/10 text-white backdrop-blur"
-                }`}
+                className={`max-w-md rounded-2xl px-3 py-2 shadow-md ${msg.sender === "user"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white/10 text-white backdrop-blur"
+                  }`}
               >
                 <CardContent className="p-0">
                   {msg.type === "file" ? (
@@ -269,6 +273,14 @@ const ChatContent = () => {
               </Card>
             </div>
           ))}
+          {isTyping && (
+            <div className="flex justify-start">
+              <Card className="max-w-md rounded-2xl px-3 py-2 shadow-md bg-white/10 text-white backdrop-blur animate-pulse">
+                <CardContent className="p-0 text-sm">EVE is typing...</CardContent>
+              </Card>
+            </div>
+          )}
+
           <div ref={endOfMessagesRef} />
         </div>
       </ScrollArea>
